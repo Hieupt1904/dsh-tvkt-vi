@@ -25,7 +25,7 @@ Khởi động lại `dsh web` nếu profile không bật `patchReload: live`. S
 | Thành phần | Cơ chế | Tác động |
 |---|---|---|
 | Hợp đồng ngôn ngữ | `ctx.systemPrompt.section()` ở order `10150` — sau hướng dẫn công cụ, trước persona suffix | ~1,7 KB mỗi request; áp cho **mọi** mode, kể cả mode tự tạo |
-| Skill `tvkt-vi` | `ctx.skills.register()` — đăng ký trong bộ nhớ, không chép tệp vào `~/.dsh/skills` | 0 token khi không nạp; ~6 KB khi nạp |
+| Skill `tvkt-vi` | `ctx.skills.registerProvider()` — đọc `SKILL.md` mỗi lần nạp, không chép tệp vào `~/.dsh/skills` | 0 token khi không nạp; ~6 KB khi nạp |
 | Agent mode `tvkt-vi` | preset khai trong `cordis.patch.yml`, persona `dsh-persona` + bộ tool của mode `standard` | chỉ phiên chọn mode mới trả |
 | Linter | `vendor/tvkt/` (bản đóng gói của TVKT-100 v1.0) + `skills/tvkt-vi/scripts/lint-text.py` | chạy cục bộ, không gọi mạng |
 
@@ -72,7 +72,7 @@ python3 vendor/tvkt/tools/tvkt_lint.py docs/api.md --format json --fail-on WARNI
 
 ## Cấu hình
 
-Plugin không có tuỳ chọn. Muốn đổi hợp đồng ngôn ngữ, sửa `lib/contract.js`; muốn đổi thân skill, sửa `skills/tvkt-vi/SKILL.md` (plugin đọc tệp lúc mount).
+Plugin không có tuỳ chọn. Muốn đổi hợp đồng ngôn ngữ, sửa `lib/contract.js`. Muốn đổi thân skill, sửa `skills/tvkt-vi/SKILL.md` — provider đọc tệp trong `get()`, nên lần nạp kế tiếp đã thấy nội dung mới.
 
 `TVKT_HOME` trỏ tới bộ TVKT-100 bản đầy đủ trên máy để `lint-text.py` dùng bản đang lưu hành thay cho `vendor/tvkt/`:
 
@@ -87,8 +87,20 @@ TVKT_HOME=/duong/dan/TVKT-100-v1.0 python3 skills/tvkt-vi/scripts/lint-text.py b
 - **L006 bắt nhầm.** "phải", "nên", "không được" dùng như từ thường vẫn bị báo INFO. Đó là mức thông tin, không phải lỗi.
 - **Preset phụ thuộc bản DSH.** Danh sách 23 row trong `cordis.patch.yml` sao từ mode `standard` của DSH `0.2.2-rc.2`. Sau khi nâng cấp DSH, chạy `node scripts/check-drift.mjs`; một row trỏ module không còn tồn tại làm hỏng cả preset.
 - **Hợp đồng tiếng Việt chiếm ~1,7 KB mỗi request.** Nếu bạn đã tự thêm khối TVKT vào `~/.dsh/AGENTS.md`, bỏ một trong hai để không trả tiền hai lần.
-- **Sửa `lib/` cần khởi động lại tiến trình DSH.** Node giữ module đã import; đổi mã mà không restart thì plugin cũ vẫn chạy. Đổi `cordis.patch.yml` và `skills/` thì có hiệu lực ngay (patch reload + file skill đọc lúc mount).
-- **Skill trùng tên.** Nếu `~/.dsh/skills/tvkt-vi` vẫn còn, registry giữ bản runtime của plugin (`source=runtime`) và bỏ qua bản trong thư mục người dùng. Chỉ nên có một bản.
+- **Mỗi loại thay đổi có độ trễ khác nhau.** Xem bảng dưới; đừng giả định mọi thứ đều nóng.
+- **Skill trùng tên.** Provider của plugin ở hạng 300, nên thắng bản trong `~/.dsh/skills` (hạng 400) và thua bản trong `.dsh/skills` của project (hạng 100/200). Chỉ nên có một bản.
+
+## Độ trễ của từng loại thay đổi
+
+| Sửa gì | Hiệu lực khi nào | Vì sao |
+|---|---|---|
+| `skills/tvkt-vi/**` (thân, references) | **lần nạp kế tiếp**, không cần restart | provider đọc tệp trong `get()`; registry không cache thân skill |
+| Tên hoặc mô tả skill | sau khi restart | catalog lấy từ `lib/skill.js`, không đọc frontmatter |
+| `lib/contract.js` (hợp đồng prompt) | sau khi restart | section đăng ký một lần lúc mount |
+| `lib/**` nói chung | sau khi restart | Node giữ module đã import |
+| `cordis.patch.yml` | ngay, nếu profile bật `patchReload: live` | loader áp lại patch |
+
+Cố ý chọn provider thay vì `ctx.skills.register()`: bản đăng ký runtime giữ thân skill trong bộ nhớ từ lúc mount, nên sửa tài liệu phải restart mới thấy — không hợp với một bộ chuẩn hay được chỉnh.
 
 ## Gỡ
 
@@ -101,7 +113,7 @@ Lệnh này gỡ cả bundle patch, nên mode `tvkt-vi` biến mất theo. Cấu
 ## Phát triển
 
 ```bash
-node --test                 # 9 test: hợp đồng đăng ký, thứ tự section, frontmatter, ngưỡng pruner, registry thật
+node --test                 # 12 test: hợp đồng provider, thứ tự section, frontmatter, ngưỡng pruner, nạp lại nóng, registry thật
 npm run check-drift         # so preset với standard của DSH đang cài
 npm run lint:skill          # chạy linter lên chính SKILL.md
 ```
@@ -110,7 +122,8 @@ Cấu trúc:
 
 ```text
 lib/contract.js              # hợp đồng ngôn ngữ (section prompt)
-lib/index.js                 # apply(): section + skill, đọc SKILL.md lúc mount
+lib/index.js                 # apply(): section + đăng ký provider
+lib/skill.js                 # provider: list() + get(), đọc SKILL.md mỗi lần nạp
 cordis.patch.yml             # bundle patch: plugin row + preset tvkt-vi
 skills/tvkt-vi/SKILL.md      # thân skill (một nguồn sự thật)
 skills/tvkt-vi/references/   # thuật ngữ, mở rộng cho chat

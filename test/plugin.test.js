@@ -1,15 +1,20 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import * as plugin from '../lib/index.js'
 import { CONTRACT_TEXT, SECTION_NAME, SECTION_ORDER } from '../lib/contract.js'
+import { SKILL_DESCRIPTION, SKILL_NAME, SKILL_RANK, createSkillProvider } from '../lib/skill.js'
+
+const SKILL_FILE = fileURLToPath(new URL('../skills/tvkt-vi/SKILL.md', import.meta.url))
 
 /** Context Cordis giả: ghi lại mọi đăng ký, không cần runtime thật. */
 function fakeContext() {
   const sections = []
-  const skills = []
+  const providers = []
   const effects = []
   const ctx = {
     effect(fn, label) {
@@ -27,32 +32,17 @@ function fakeContext() {
       },
     },
     skills: {
-      register(skill) {
-        skills.push(skill)
+      registerProvider(factory) {
+        providers.push(factory({ signal: new AbortController().signal, invalidate() {} }))
         return () => {}
       },
     },
   }
-  return { ctx, sections, skills, effects }
+  return { ctx, sections, providers, effects }
 }
 
-test('bản đăng ký skill qua được kiểm tra của registry', () => {
-  // Hợp đồng của SkillDefinition: thiếu `source` thì skills.get() từ chối
-  // với lỗi "loaded skill … source must be a string", dù register() thành công.
-  const skill = plugin.loadSkill()
-  assert.equal(typeof skill.source, 'string')
-  assert.equal(skill.source, 'runtime')
-  assert.equal(typeof skill.provider === 'string' || skill.provider === undefined, true)
-  assert.equal(typeof skill.content, 'string')
-  assert.equal(typeof skill.path, 'string')
-  assert.ok(skill.path.endsWith('SKILL.md'))
-  assert.deepEqual(skill.resourceBase.kind, 'directory')
-  assert.ok(skill.resourceBase.path.endsWith('skills/tvkt-vi'))
-  assert.ok(skill.content.length > 1000)
-})
-
-test('mount đăng ký đúng một section prompt và một skill', () => {
-  const { ctx, sections, skills, effects } = fakeContext()
+test('mount đăng ký một section prompt và một provider skill', () => {
+  const { ctx, sections, providers, effects } = fakeContext()
   plugin.apply(ctx)
 
   assert.equal(sections.length, 1)
@@ -60,8 +50,10 @@ test('mount đăng ký đúng một section prompt và một skill', () => {
   assert.equal(sections[0].order, SECTION_ORDER)
   assert.ok(sections[0].text.length > 500, 'hợp đồng ngôn ngữ phải có nội dung thật')
 
-  assert.equal(skills.length, 1)
-  assert.equal(skills[0].name, 'tvkt-vi')
+  assert.equal(providers.length, 1)
+  assert.equal(providers[0].name, 'tvkt-vi')
+  assert.equal(typeof providers[0].list, 'function')
+  assert.equal(typeof providers[0].get, 'function')
   assert.equal(effects.length, 2, 'mỗi đăng ký phải bọc trong ctx.effect để tự gỡ')
 })
 
@@ -75,31 +67,59 @@ test('hợp đồng không còn chỗ trống chưa thay', () => {
   assert.ok(!CONTRACT_TEXT.includes('TVKT_HOME'), 'không được rò biến môi trường vào prompt')
 })
 
-test('skill đăng ký khớp frontmatter trên đĩa', () => {
-  const { ctx, skills } = fakeContext()
-  plugin.apply(ctx)
-
-  const path = fileURLToPath(new URL('../skills/tvkt-vi/SKILL.md', import.meta.url))
-  const raw = readFileSync(path, 'utf8')
-  const name = /^name:\s*(\S+)$/m.exec(raw)?.[1]
-  assert.equal(name, skills[0].name, 'tên skill trong frontmatter phải trùng tên đăng ký')
-
-  assert.ok(skills[0].content.includes('# TVKT-100'), 'thân skill phải được nạp')
-  assert.ok(skills[0].content.includes('Thư mục tệp của skill'), 'phải nối đường dẫn thư mục thật')
-  assert.ok(!skills[0].content.includes('{{'), 'không được để {{…}} trong thân skill')
+test('candidate đủ trường để registry không từ chối', async () => {
+  const [candidate] = await createSkillProvider().list({})
+  assert.equal(candidate.name, SKILL_NAME)
+  assert.equal(typeof candidate.source, 'string')
+  assert.equal(candidate.source, 'bundled')
+  assert.equal(candidate.provider, 'tvkt-vi')
+  assert.equal(candidate.rank, SKILL_RANK)
+  assert.equal(typeof candidate.description, 'string')
+  assert.ok(candidate.invocation.modelInvocable)
+  assert.deepEqual(candidate.resourceBase.kind, 'directory')
+  assert.ok(candidate.path.endsWith('SKILL.md'))
+  assert.ok(SKILL_RANK > 200 && SKILL_RANK < 400, 'phải thắng user dir (400) và thua project (100/200)')
 })
 
-test('mô tả skill đủ để agent tự chọn nạp', () => {
-  assert.ok(plugin.SKILL_DESCRIPTION.includes('TVKT-100'))
-  assert.ok(plugin.SKILL_DESCRIPTION.includes('tiếng Việt'))
-  assert.ok(plugin.SKILL_DESCRIPTION.length < 1000, 'mô tả phải ngắn, catalog đọc mỗi bước')
+test('description trong frontmatter khớp hằng số trong mã', () => {
+  const raw = readFileSync(SKILL_FILE, 'utf8')
+  const m = /^description:\s*"(.+)"$/m.exec(raw)
+  assert.ok(m, 'frontmatter phải có description')
+  assert.equal(m[1], SKILL_DESCRIPTION, 'hai nguồn mô tả đã lệch nhau')
+  assert.equal(/^name:\s*(\S+)$/m.exec(raw)?.[1], SKILL_NAME)
+})
+
+test('get() đọc lại tệp, không cache thân skill', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'tvkt-'))
+  const dir = path.join(root, 'skills', SKILL_NAME)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(path.join(dir, 'SKILL.md'), '# Bản một\n\nNội dung cũ.\n')
+
+  const provider = createSkillProvider(root)
+  const [candidate] = await provider.list({})
+  const first = await provider.get(candidate, {})
+  assert.match(first.content, /Bản một/)
+
+  writeFileSync(path.join(dir, 'SKILL.md'), '# Bản hai\n\nNội dung mới.\n')
+  const second = await provider.get(candidate, {})
+  assert.match(second.content, /Bản hai/, 'sửa tệp phải thấy ngay ở lần nạp kế tiếp')
+  assert.ok(!second.content.includes('Bản một'))
+})
+
+test('get() trả undefined cho tên lạ', async () => {
+  const provider = createSkillProvider()
+  assert.equal(await provider.get({ name: 'khac' }, {}), undefined)
 })
 
 test('thân skill dưới ngưỡng pruner 8192 code point', () => {
-  const path = fileURLToPath(new URL('../skills/tvkt-vi/SKILL.md', import.meta.url))
-  const raw = readFileSync(path, 'utf8')
-  const points = [...raw].length
+  const points = [...readFileSync(SKILL_FILE, 'utf8')].length
   assert.ok(points < 8192, `thân skill ${points} code point, vượt ngưỡng pruner`)
+})
+
+test('mô tả skill đủ để agent tự chọn nạp nhưng vẫn ngắn', () => {
+  assert.ok(SKILL_DESCRIPTION.includes('TVKT-100'))
+  assert.ok(SKILL_DESCRIPTION.includes('tiếng Việt'))
+  assert.ok(SKILL_DESCRIPTION.length < 1000, 'mô tả phải ngắn, catalog đọc mỗi bước')
 })
 
 test('plugin khai báo inject đúng hai dịch vụ', () => {
