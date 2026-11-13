@@ -1,0 +1,12 @@
+dsh-tvkt-vi
+Copyright (c) 2026 Hieupt1904
+
+Gói này đóng gói bộ chuẩn TVKT-100 v1.0.
+
+vendor/tvkt/ và nội dung 30 quy tắc, 70 thuật ngữ trong skills/tvkt-vi/ lấy từ
+bộ TVKT-100 phiên bản 1.0 do tác giả của gói này xây dựng. Bộ gốc tự mô tả là
+"bản đề xuất nội bộ", không phải tiêu chuẩn Việt Nam chính thức và không phải
+bản dịch chính thức của ASD-STE100. Bộ gốc chưa kèm tệp giấy phép riêng.
+
+Phần mở rộng trong skills/tvkt-vi/references/chat-extension.md (xưng hô, chính
+tả, trộn tiếng Anh) là đề xuất bổ sung, không thuộc TVKT-100 v1.0.

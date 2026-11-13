@@ -1,0 +1,66 @@
+{
+  "name": "dsh-tvkt-vi",
+  "version": "0.1.0",
+  "description": "Chuẩn tiếng Việt kỹ thuật TVKT-100 cho DeepSeek Harness: hợp đồng system prompt cho mọi mode, skill tvkt-vi, linter L001-L007 và agent mode DRAFT/REVIEW/REWRITE.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./contract": "./lib/contract.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "skills",
+    "vendor",
+    "scripts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check-drift": "node scripts/check-drift.mjs",
+    "lint:skill": "python3 skills/tvkt-vi/scripts/lint-text.py skills/tvkt-vi/SKILL.md --quiet"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "vietnamese",
+    "tieng-viet",
+    "tvkt",
+    "controlled-language",
+    "ste100",
+    "writing-standard",
+    "linter"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hieupt1904/dsh-tvkt-vi.git"
+  },
+  "homepage": "https://github.com/Hieupt1904/dsh-tvkt-vi#readme",
+  "bugs": {
+    "url": "https://github.com/Hieupt1904/dsh-tvkt-vi/issues"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "install": {
+      "preferred": "git",
+      "git": "https://github.com/Hieupt1904/dsh-tvkt-vi.git",
+      "tarball": "https://codeload.github.com/Hieupt1904/dsh-tvkt-vi/tar.gz/refs/heads/main",
+      "zip": "https://codeload.github.com/Hieupt1904/dsh-tvkt-vi/zip/refs/heads/main"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dshTarget": "0.2.2-rc.2"
+}

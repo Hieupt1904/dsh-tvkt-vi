@@ -1,0 +1,582 @@
+{
+  "version": "1.0",
+  "description": "Từ điển khởi đầu TVKT-100: thuật ngữ được phê duyệt T001-T023; T024-T070 đang đề xuất, cần được phê duyệt theo dự án.",
+  "discouraged_phrases": [
+    {
+      "id": "P001",
+      "phrase": "tiến hành kiểm tra",
+      "preferred": "kiểm tra",
+      "note": "Khi cùng hành động",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P002",
+      "phrase": "thực hiện lưu",
+      "preferred": "lưu",
+      "note": "Khi cùng nghĩa",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P003",
+      "phrase": "nhằm mục đích",
+      "preferred": "để",
+      "note": "Khi chỉ mục đích",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P004",
+      "phrase": "trong trường hợp",
+      "preferred": "nếu",
+      "note": "Khi chỉ điều kiện logic",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P005",
+      "phrase": "một cách nhanh chóng",
+      "preferred": "trong thời gian xác định",
+      "note": "Khi yêu cầu phải đo được; bổ sung ngưỡng cụ thể",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P006",
+      "phrase": "một cách chính xác",
+      "preferred": "theo tiêu chí xác định",
+      "note": "Khi cần kiểm thử; nêu tiêu chí",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P007",
+      "phrase": "có thể nói rằng",
+      "preferred": "bỏ cụm từ",
+      "note": "Khi không thêm thông tin",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P008",
+      "phrase": "vân vân",
+      "preferred": "liệt kê rõ hoặc dẫn danh sách",
+      "note": "Đặc biệt trong yêu cầu bắt buộc",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P009",
+      "phrase": "khoảng chừng",
+      "preferred": "khoảng",
+      "note": "Chỉ khi cho phép xấp xỉ",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P010",
+      "phrase": "thao tác xử lý",
+      "preferred": "nêu động từ cụ thể",
+      "note": "Tùy ngữ cảnh",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P011",
+      "phrase": "có khả năng xảy ra",
+      "preferred": "có thể xảy ra",
+      "note": "Khi nói về khả năng",
+      "severity": "WARNING"
+    },
+    {
+      "id": "P012",
+      "phrase": "tiến hành triển khai",
+      "preferred": "triển khai",
+      "note": "Khi cùng nghĩa",
+      "severity": "WARNING"
+    }
+  ],
+  "terms": [
+    {
+      "id": "T001",
+      "term": "người dùng",
+      "definition": "Người tương tác với hệ thống",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T002",
+      "term": "tài khoản",
+      "definition": "Thực thể quản lý danh tính và thông tin liên quan",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T003",
+      "term": "đăng nhập",
+      "definition": "Thiết lập trạng thái truy cập theo cơ chế đăng nhập",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T004",
+      "term": "xác thực",
+      "definition": "Kiểm tra bằng chứng danh tính",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T005",
+      "term": "phân quyền",
+      "definition": "Gán hoặc xác định quyền cho chủ thể",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T006",
+      "term": "cấp quyền",
+      "definition": "Cho phép chủ thể sử dụng một quyền cụ thể",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T007",
+      "term": "thu hồi quyền",
+      "definition": "Loại bỏ quyền đã cấp",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T008",
+      "term": "tạo",
+      "definition": "Làm xuất hiện đối tượng mới",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T009",
+      "term": "đọc",
+      "definition": "Lấy thông tin từ đối tượng",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T010",
+      "term": "lưu",
+      "definition": "Ghi nhận dữ liệu vào nơi lưu trữ",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T011",
+      "term": "cập nhật",
+      "definition": "Thay đổi dữ liệu hiện có",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T012",
+      "term": "xóa",
+      "definition": "Loại bỏ dữ liệu theo cơ chế xóa đã định nghĩa",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T013",
+      "term": "vô hiệu hóa",
+      "definition": "Ngừng cho phép sử dụng nhưng không nhất thiết xóa",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T014",
+      "term": "đồng bộ",
+      "definition": "Đưa dữ liệu giữa các thành phần về trạng thái nhất quán theo quy tắc",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T015",
+      "term": "gửi",
+      "definition": "Chuyển thông tin đến đích",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T016",
+      "term": "nhận",
+      "definition": "Tiếp nhận thông tin từ nguồn",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T017",
+      "term": "kiểm tra",
+      "definition": "Đánh giá đối tượng theo điều kiện xác định",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T018",
+      "term": "trả về",
+      "definition": "Cung cấp kết quả cho bên gọi",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T019",
+      "term": "thử lại",
+      "definition": "Thực hiện lại hành động sau một lần thử",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T020",
+      "term": "nhật ký",
+      "definition": "Bản ghi sự kiện hoặc hoạt động",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T021",
+      "term": "sự kiện",
+      "definition": "Điều đã xảy ra và được hệ thống ghi nhận hoặc phát ra",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T022",
+      "term": "yêu cầu API",
+      "definition": "Thông điệp gửi đến giao diện API để yêu cầu thao tác",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T023",
+      "term": "phản hồi API",
+      "definition": "Thông điệp kết quả của yêu cầu API",
+      "status": "approved",
+      "scope": "general-software"
+    },
+    {
+      "id": "T024",
+      "term": "yêu cầu",
+      "definition": "Thông tin chỉ dẫn hệ thống thực hiện một hành động hoặc đáp ứng một điều kiện",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T025",
+      "term": "phiên",
+      "definition": "Ngữ cảnh tương tác được duy trì trong một khoảng thời gian",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T026",
+      "term": "mã truy cập",
+      "definition": "Thông tin dùng để chứng minh hoặc cho phép truy cập theo một cơ chế",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T027",
+      "term": "quyền truy cập",
+      "definition": "Khả năng được cho phép thực hiện một hành động trên tài nguyên",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T028",
+      "term": "vai trò",
+      "definition": "Tập quyền hoặc trách nhiệm được gán cho chủ thể",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T029",
+      "term": "tài nguyên",
+      "definition": "Đối tượng mà hệ thống quản lý hoặc cung cấp",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T030",
+      "term": "điểm cuối API",
+      "definition": "Địa chỉ và quy ước để gọi một chức năng của API",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T031",
+      "term": "tham số",
+      "definition": "Giá trị được cung cấp để điều khiển lời gọi hoặc hành vi",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T032",
+      "term": "tải trọng",
+      "definition": "Phần dữ liệu chính của một thông điệp",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T033",
+      "term": "mã trạng thái",
+      "definition": "Mã biểu thị kết quả của thao tác theo giao thức hoặc quy ước",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T034",
+      "term": "lỗi xác thực",
+      "definition": "Lỗi liên quan đến việc xác minh bằng chứng danh tính",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T035",
+      "term": "lỗi phân quyền",
+      "definition": "Lỗi liên quan đến quyền thực hiện hành động",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T036",
+      "term": "giới hạn tốc độ",
+      "definition": "Quy tắc giới hạn số yêu cầu trong một khoảng thời gian",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T037",
+      "term": "thời gian chờ",
+      "definition": "Khoảng thời gian tối đa trước khi ngừng chờ kết quả",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T038",
+      "term": "thử lại tự động",
+      "definition": "Hệ thống tự gửi lại yêu cầu theo điều kiện xác định",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T039",
+      "term": "tính lũy đẳng",
+      "definition": "Thuộc tính mà việc thực hiện lặp lại không làm thay đổi thêm hiệu quả cuối cùng theo định nghĩa thao tác",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T040",
+      "term": "giao dịch",
+      "definition": "Nhóm thao tác được xử lý theo một tập bảo đảm nhất định",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T041",
+      "term": "bản ghi",
+      "definition": "Một đơn vị dữ liệu có cấu trúc trong nơi lưu trữ",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T042",
+      "term": "bảng dữ liệu",
+      "definition": "Tập bản ghi theo lược đồ trong cơ sở dữ liệu quan hệ",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T043",
+      "term": "lược đồ",
+      "definition": "Mô tả cấu trúc và ràng buộc dữ liệu",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T044",
+      "term": "chỉ mục",
+      "definition": "Cấu trúc hỗ trợ tìm kiếm hoặc truy cập dữ liệu",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T045",
+      "term": "bản sao lưu",
+      "definition": "Bản dữ liệu được giữ để hỗ trợ phục hồi",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T046",
+      "term": "khôi phục",
+      "definition": "Đưa dữ liệu hoặc hệ thống về trạng thái mục tiêu",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T047",
+      "term": "hàng đợi",
+      "definition": "Cơ chế lưu và chuyển các công việc hoặc thông điệp chờ xử lý",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T048",
+      "term": "thông điệp",
+      "definition": "Đơn vị thông tin trao đổi giữa các thành phần",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T049",
+      "term": "dịch vụ",
+      "definition": "Thành phần cung cấp chức năng qua giao diện xác định",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T050",
+      "term": "mô-đun",
+      "definition": "Đơn vị tổ chức chức năng và mã nguồn",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T051",
+      "term": "cấu hình",
+      "definition": "Tập giá trị điều khiển hành vi hệ thống",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T052",
+      "term": "môi trường triển khai",
+      "definition": "Tập hạ tầng và cấu hình nơi hệ thống được chạy",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T053",
+      "term": "bản phát hành",
+      "definition": "Phiên bản sản phẩm được công bố hoặc phân phối",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T054",
+      "term": "triển khai",
+      "definition": "Đưa một phiên bản thành phần vào môi trường đích",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T055",
+      "term": "hoàn tác",
+      "definition": "Quay lại thay đổi theo cơ chế đã xác định",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T056",
+      "term": "giám sát",
+      "definition": "Thu thập và đánh giá dấu hiệu hoạt động của hệ thống",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T057",
+      "term": "cảnh báo vận hành",
+      "definition": "Thông báo cho người vận hành khi điều kiện giám sát được kích hoạt",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T058",
+      "term": "số liệu đo",
+      "definition": "Giá trị định lượng về hành vi hoặc trạng thái hệ thống",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T059",
+      "term": "bản ghi truy vết",
+      "definition": "Dữ liệu mô tả chuỗi xử lý của một yêu cầu hoặc tác vụ",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T060",
+      "term": "trường hợp kiểm thử",
+      "definition": "Tập điều kiện, bước và kết quả mong đợi để kiểm tra một hành vi",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T061",
+      "term": "điều kiện chấp nhận",
+      "definition": "Tiêu chí cần đạt để chấp nhận yêu cầu hoặc tính năng",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T062",
+      "term": "lỗi phần mềm",
+      "definition": "Hành vi thực tế khác với hành vi mong đợi đã xác định",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T063",
+      "term": "hồi quy",
+      "definition": "Sự xuất hiện lại của lỗi hoặc suy giảm hành vi sau thay đổi",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T064",
+      "term": "hợp đồng API",
+      "definition": "Quy ước về dữ liệu, hành vi và kết quả giữa bên cung cấp và bên gọi",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T065",
+      "term": "phụ thuộc",
+      "definition": "Quan hệ khiến một thành phần cần thành phần hoặc điều kiện khác",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T066",
+      "term": "bí mật cấu hình",
+      "definition": "Giá trị nhạy cảm dùng cho xác thực hoặc bảo vệ truy cập",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T067",
+      "term": "quyền tối thiểu",
+      "definition": "Nguyên tắc chỉ cấp quyền cần thiết để hoàn thành nhiệm vụ",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T068",
+      "term": "phạm vi truy cập",
+      "definition": "Giới hạn tài nguyên hoặc hành động mà quyền áp dụng",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T069",
+      "term": "nhật ký kiểm toán",
+      "definition": "Bản ghi hỗ trợ truy cứu thay đổi hoặc hành động quan trọng",
+      "status": "proposed",
+      "scope": "software-extension"
+    },
+    {
+      "id": "T070",
+      "term": "tác vụ nền",
+      "definition": "Công việc chạy ngoài luồng xử lý tương tác trực tiếp",
+      "status": "proposed",
+      "scope": "software-extension"
+    }
+  ]
+}

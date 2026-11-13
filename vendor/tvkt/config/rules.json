@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "max_instruction_units": 30,
+  "max_descriptive_units": 40,
+  "max_sentences_per_paragraph": 5,
+  "normative_keywords": ["PHẢI", "KHÔNG ĐƯỢC", "NÊN", "ĐƯỢC PHÉP"],
+  "ambiguous_terms": ["nhanh", "ổn định", "phù hợp", "đầy đủ", "tối ưu", "một thời gian"],
+  "planning_terms": ["sẽ được triển khai", "dự kiến phát triển", "sẽ bổ sung"],
+  "planning_status_labels": ["ĐÃ TRIỂN KHAI", "ĐANG PHÁT TRIỂN", "DỰ KIẾN", "CHƯA XÁC MINH"],
+  "imperative_leads": ["mở", "đóng", "kiểm tra", "cấu hình", "nhập", "chọn", "nhấn", "gửi", "tải", "khởi động", "dừng", "xóa", "lưu", "chạy"]
+}
