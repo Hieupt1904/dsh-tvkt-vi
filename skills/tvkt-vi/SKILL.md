@@ -35,13 +35,17 @@ Mặc định **REVIEW** khi người dùng đưa văn bản có sẵn và khôn
 
 ## 30 quy tắc, bản rút
 
-**Từ ngữ.** 001 một khái niệm một thuật ngữ. 002 từ trực tiếp: "tiến hành kiểm tra" → "kiểm tra". 003 cấm từ mơ hồ trong yêu cầu kiểm thử ("nhanh", "ổn định", "tối ưu") — phải có tiêu chí đo. 004 giữ nguyên định danh kỹ thuật, bọc `backticks`. 005 giải thích chữ viết tắt ở lần đầu.
+**Từ ngữ.** 001 một khái niệm một thuật ngữ. 002 dùng từ trực tiếp thay cụm động từ rỗng: bỏ "tiến hành" đứng trước hành động thật, thay cụm nêu mục đích bằng "để", thay cụm nêu điều kiện bằng "nếu".
+
+**Tiêu chí đo.** 003 cấm tính từ mô tả chất lượng mà không kèm ngưỡng trong yêu cầu kiểm thử — ví dụ nói một API phản hồi tốt hoặc đủ mượt mà không nêu số đo. Mỗi tiêu chí phải quy ra ngưỡng đo được. 004 giữ nguyên định danh kỹ thuật, bọc `backticks`. 005 giải thích chữ viết tắt ở lần đầu.
 
 **Cụm danh từ.** 006 tránh chuỗi danh từ dài. 007 một đối tượng giữ một tên trong toàn tài liệu. 008 nói rõ ai sở hữu, chứa, tác động lên ai.
 
 **Động từ.** 009 động từ cụ thể (tạo, đọc, kiểm tra, gửi, nhận, lưu, cập nhật, xóa, khóa, mở, đóng, trả về); hạn chế "xử lý", "thao tác", "tiến hành". 010 câu chủ động; bị động chỉ khi chủ thể không xác định. 011 bốn mức **PHẢI** / **KHÔNG ĐƯỢC** / **NÊN** / **ĐƯỢC PHÉP**; không dùng "có thể" thay "ĐƯỢC PHÉP". 012 không đổi động từ khác nghĩa: khởi tạo ≠ bắt đầu, xóa ≠ ẩn, lưu ≠ đồng bộ.
 
-**Câu.** 013 mỗi câu một thông tin chính. 014 xác định chủ thể. 015 **Nếu** = điều kiện, **Khi** = thời điểm, **Sau khi** = trình tự. 016 hướng dẫn ≤ 30 tiếng, mô tả ≤ 40 tiếng, đoạn ≤ 5 câu, mỗi câu hướng dẫn một hành động. 017 tránh "và/hoặc" khi viết rõ từng trường hợp được.
+**Câu.** 013 mỗi câu một thông tin chính. 014 xác định chủ thể. 015 **Nếu** = điều kiện, **Khi** = thời điểm, **Sau khi** = trình tự.
+
+017 tránh "và/hoặc" khi viết rõ từng trường hợp được. 016 đặt ngưỡng độ dài: hướng dẫn ≤ 30 tiếng, mô tả ≤ 40 tiếng, đoạn ≤ 5 câu, mỗi câu hướng dẫn một hành động.
 
 **Quy trình.** 018 mỗi bước một hành động chính. 019 thứ tự theo phụ thuộc thật. 020 nêu kết quả mong đợi và cách kiểm tra. 021 cảnh báo **trước** bước rủi ro, nêu rủi ro và cách phòng tránh.
 
