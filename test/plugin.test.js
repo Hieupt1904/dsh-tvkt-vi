@@ -126,3 +126,24 @@ test('plugin khai báo inject đúng hai dịch vụ', () => {
   assert.deepEqual([...plugin.inject].sort(), ['skills', 'systemPrompt'])
   assert.equal(plugin.name, 'tvkt-vi')
 })
+
+test('preset khai báo đúng phần thêm PTC và không chép row của PTC', () => {
+  const raw = readFileSync(fileURLToPath(new URL('../cordis.patch.yml', import.meta.url)), 'utf8')
+  const rows = new Map()
+  let current
+  for (const line of raw.split('\n')) {
+    const id = /^\s{10}- id:\s*(\S+)/.exec(line)
+    if (id) { current = id[1]; rows.set(current, undefined); continue }
+    const name = /^\s{12}name:\s*['"]?([^'"\s]+)['"]?\s*$/.exec(line)
+    if (name && current !== undefined && rows.get(current) === undefined) rows.set(current, name[1])
+  }
+  // Có: bộ thực thi PTC (gọi nhiều tool một lượt).
+  assert.equal(rows.get('tool-executor-ptc'), '@deepseek-ai/dsh-tool-executor-ptc')
+  // Không: các row PTC cắt bớt có chủ ý — plugin manager vẫn giữ như standard.
+  assert.equal(rows.get('tool-plugin-manager'), '@deepseek-ai/dsh-plugin-manager/tools')
+  assert.ok(rows.has('tool-plugin-market'))
+  // Không chép plugin ngoài: chúng đã ở bundle root, chép vào preset là trùng.
+  for (const external of ['ego-browser', 'dsh-service', 'tool-agent-team', 'dsh-mattpocock-skills-deck']) {
+    assert.ok(!rows.has(external), `không được khai lại ${external} trong preset`)
+  }
+})

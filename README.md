@@ -90,6 +90,38 @@ TVKT_HOME=/duong/dan/TVKT-100-v1.0 python3 skills/tvkt-vi/scripts/lint-text.py b
 - **Mỗi loại thay đổi có độ trễ khác nhau.** Xem bảng dưới; đừng giả định mọi thứ đều nóng.
 - **Skill trùng tên.** Provider của plugin ở hạng 300, nên thắng bản trong `~/.dsh/skills` (hạng 400) và thua bản trong `.dsh/skills` của project (hạng 100/200). Chỉ nên có một bản.
 
+## Phạm vi tool của mode `tvkt-vi`
+
+Preset gồm **standard + `tool-executor-ptc`**: 24 row, trong đó 23 row khớp `standard` và một row lấy từ `ptc`.
+
+**CẢNH BÁO:** row đó không phải "thêm một tool" mà **đổi cách gọi tool**. Executor PTC biến `run_code` thành công cụ duy nhất gọi trực tiếp; model viết chương trình gọi các tool khác bên trong. Đây là hành vi của mode `ptc`, phù hợp khi cần gọi nhiều tool một lượt rồi lọc, gộp, đếm kết quả.
+
+Muốn mode chỉ dùng tool trực tiếp như `standard`, xoá ba dòng này khỏi `cordis.patch.yml`, rồi chạy `npm run check-drift`:
+
+```yaml
+          - id: tool-executor-ptc
+            name: '@deepseek-ai/dsh-tool-executor-ptc'
+```
+
+Nếu bỏ row, nhớ xoá cả `tool-executor-ptc` khỏi `INTENTIONAL_EXTRAS` trong `scripts/check-drift.mjs`.
+
+Không chép ba khác biệt còn lại của `ptc`, vì chúng là cắt bớt có chủ ý chứ không phải năng lực thêm:
+
+| `ptc` khác `standard` | Có chép? |
+|---|---|
+| thêm `tool-executor-ptc` | **có** |
+| tắt `tool-plugin-manager` và `tool-plugin-market` | không — mode tiếng Việt vẫn cần quản lý plugin |
+| bỏ `customSkillDirs` của `dsh-agent-preset` | không — bỏ thì mất skill `dsh-doc` |
+| đổi ghi chú `apply_patch` | không — giữ nguyên như `standard` |
+
+**Không khai lại plugin nằm ở bundle root.** `ego-browser`, `dsh-service`, `agent-team`, `dsh-mattpocock-skills-deck`, các MCP… đăng ký tool ở tầng root, mà agent của preset **thừa hưởng** tầng đó:
+
+> `ToolRestriction` applies to the tools a scope inherits: the deployment-global layer plus every ancestor scope on its chain. — `docs/subsystems/tools.md`
+
+Hệ quả: mọi mode đều thấy các tool đó mà không cần khai báo. Khai lại trong preset là trùng lặp; với row có dịch vụ hoặc HTTP route thì còn xung đột realm. Bằng chứng ngay trên máy này: phiên đang chạy dùng preset `full-spectrum` — danh sách của nó không có `ego-browser` lẫn MCP — nhưng vẫn có đủ `ego_*`, `mcp__*`, `list_agents`.
+
+Muốn kiểm sau khi cài: mở mode `tvkt-vi`, xem danh sách tool có `run_code` (PTC) cùng `ego_*`, `mcp__*`; thiếu nhóm nào thì đó là lỗi mount của bundle tương ứng, không phải thiếu khai báo trong preset.
+
 ## Độ trễ của từng loại thay đổi
 
 | Sửa gì | Hiệu lực khi nào | Vì sao |
@@ -113,7 +145,7 @@ Lệnh này gỡ cả bundle patch, nên mode `tvkt-vi` biến mất theo. Cấu
 ## Phát triển
 
 ```bash
-node --test                 # 12 test: hợp đồng provider, thứ tự section, frontmatter, ngưỡng pruner, nạp lại nóng, registry thật
+node --test                 # 13 test: hợp đồng provider, thứ tự section, frontmatter, ngưỡng pruner, nạp lại nóng, registry thật
 npm run check-drift         # so preset với standard của DSH đang cài
 npm run lint:skill          # chạy linter lên chính SKILL.md
 ```

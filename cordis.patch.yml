@@ -195,6 +195,11 @@
             config:
               fetch: true
               searchTimeoutMs: 60000
+          # PTC: gọi nhiều tool trong một lượt rồi lọc/tổng hợp kết quả.
+          # Chỉ thêm row này từ preset `ptc`; các khác biệt còn lại của ptc là
+          # cắt bớt có chủ ý (apply_patch, plugin-market, customSkillDirs) nên không chép.
+          - id: tool-executor-ptc
+            name: '@deepseek-ai/dsh-tool-executor-ptc'
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
           - id: tool-office
