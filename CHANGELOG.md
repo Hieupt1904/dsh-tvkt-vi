@@ -2,6 +2,20 @@
 
 Theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
 
+## [0.3.0] — 2026-11-15
+
+### Thêm
+
+- Metadata hiển thị theo spec của DSH: `locale/en.json` + `locale/zh.json` với `meta.title`, `meta.description`, `meta.detail`; tài liệu chi tiết ở `docs/DETAIL.md` và `docs/DETAIL.zh.md`; icon SVG tự chứa ở `icon.svg` (280 byte, dưới hạn 256 KiB).
+- `exports` cho `./locale/*.json` và `./icon`; `files` xuất bản `locale`, `docs`, `icon.svg`.
+- `engines.dsh: ">=0.2.0-rc.1 <0.3.0-0"`: DSH từ chối cài bundle có dải không khớp bản đang chạy, thay vì lỗi khó hiểu lúc mount.
+- Test cho hợp đồng manifest và metadata hiển thị (tổng 16).
+
+### Sửa
+
+- `peerDependencies` của `@deepseek-ai/cordis` dùng dải có nhánh prerelease tường minh. Dải không có `-0` loại bỏ im lặng mọi bản pre-release của harness, đúng lỗi mà hướng dẫn đóng gói của DSH cảnh báo.
+- Không đóng gói `vendor/tvkt/tools/__pycache__` nữa: thêm `vendor/.npmignore` để đường dẫn tương đối của linter vẫn giữ nguyên.
+
 ## [0.2.1] — 2026-11-15
 
 ### Sửa

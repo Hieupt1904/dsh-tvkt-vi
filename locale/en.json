@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Vietnamese technical standard",
+    "description": "Enforces a Vietnamese technical-writing standard on every agent, with a rule skill, a dedicated mode and a bundled linter.",
+    "detail": "docs/DETAIL.md"
+  }
+}

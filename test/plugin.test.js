@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -153,4 +153,42 @@ test('số phiên bản khớp giữa package.json và metadata của skill', ()
   const meta = readFileSync(fileURLToPath(new URL('../lib/skill.js', import.meta.url)), 'utf8')
   const inCode = /metadata: \{ version: '([^']+)'/.exec(meta)?.[1]
   assert.equal(inCode, pkg.version, 'metadata.version trong lib/skill.js phải khớp package.json')
+})
+
+test('metadata hiển thị: locale hợp lệ, detail và icon tồn tại trong gói', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
+
+  for (const lang of ['en', 'zh']) {
+    const file = path.join(root, 'locale', `${lang}.json`)
+    const meta = JSON.parse(readFileSync(file, 'utf8')).meta
+    assert.equal(typeof meta.title, 'string')
+    assert.ok(meta.title.length > 0)
+    assert.equal(typeof meta.description, 'string')
+    assert.ok(meta.description.length > 0)
+    // detail phải nằm trong thư mục con, không ở gốc gói
+    assert.match(meta.detail, /^[^/]+\/[^/]+\.md$/)
+    assert.ok(existsSync(path.join(root, meta.detail)), `thiếu ${meta.detail}`)
+  }
+
+  assert.equal(pkg.icon, './icon.svg')
+  assert.ok(existsSync(path.join(root, 'icon.svg')), 'thiếu icon.svg')
+  assert.ok(readFileSync(path.join(root, 'icon.svg')).length < 256 * 1024, 'icon vượt 256 KiB')
+  assert.ok(pkg.files.includes('docs'), 'phải xuất bản thư mục docs')
+  assert.ok(pkg.files.includes('locale/*.json'), 'phải xuất bản locale')
+  assert.ok(pkg.files.includes('icon.svg'), 'phải xuất bản icon')
+  assert.equal(pkg.exports['./locale/*.json'], './locale/*.json')
+})
+
+test('manifest khai báo đúng hợp đồng bundle của DSH', () => {
+  const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+  assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml')
+  assert.ok(existsSync(fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))))
+  // engines.dsh: DSH từ chối bundle có dải không khớp bản đang chạy
+  assert.equal(typeof pkg.engines.dsh, 'string')
+  assert.match(pkg.engines.dsh, />=0\.2\.0/)
+  // peer cordis phải có nhánh prerelease tường minh, nếu không pre-release bị loại im lặng
+  assert.match(pkg.peerDependencies['@deepseek-ai/cordis'], /-0\b/)
+  // không khai dsh.client: bundle này không có UI trình duyệt
+  assert.equal(pkg.dsh.client, undefined)
 })

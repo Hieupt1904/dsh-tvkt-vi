@@ -122,6 +122,20 @@ Hệ quả: mọi mode đều thấy các tool đó mà không cần khai báo. 
 
 Muốn kiểm sau khi cài: mở mode `tvkt-vi`, xem danh sách tool có `run_code` (PTC) cùng `ego_*`, `mcp__*`; thiếu nhóm nào thì đó là lỗi mount của bundle tương ứng, không phải thiếu khai báo trong preset.
 
+## Đúng hợp đồng bundle của DSH
+
+| Yêu cầu | Cách khai | Ghi chú |
+|---|---|---|
+| Manifest bundle | `dsh.bundle.patch` → `./cordis.patch.yml` | thiếu nó, `dsh plugin` chỉ cài như dependency thường và cảnh báo |
+| Dải DSH hỗ trợ | `engines.dsh: ">=0.2.0-rc.1 <0.3.0-0"` | DSH từ chối cài nếu không khớp, thay vì lỗi lúc mount |
+| Peer được host chia sẻ | `@deepseek-ai/cordis` trong `peerDependencies`, có `-0` | thiếu nhánh prerelease thì mọi bản pre-release bị loại im lặng |
+| Tiêu đề, mô tả, tài liệu chi tiết | `locale/en.json`, `locale/zh.json`, `docs/DETAIL*.md` | `meta.detail` phải nằm trong thư mục con, không ở gốc gói |
+| Icon | `icon.svg` + trường `icon` trong manifest | SVG tự chứa, dưới 256 KiB |
+| Bản dựng sẵn | `dsh.install.tarball` + asset tên cố định | giữ nguyên `releases/latest/download/dsh-tvkt-vi.tgz` |
+| Không có UI trình duyệt | không khai `dsh.client` | bundle chỉ đóng góp cấu hình và module Node |
+
+Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `test/plugin.test.js`.
+
 ## Độ trễ của từng loại thay đổi
 
 | Sửa gì | Hiệu lực khi nào | Vì sao |
