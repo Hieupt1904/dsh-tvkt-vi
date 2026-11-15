@@ -161,6 +161,16 @@ Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `t
 | `cordis.patch.yml` | ngay, nếu profile bật `patchReload: live` | loader áp lại patch |
 
 
+## Cài từ npm
+
+```bash
+dsh plugin --profile web add dsh-tvkt-vi
+```
+
+Bản trên registry: `0.4.0` (`latest`). Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
+
+Danh mục `awesome-dsh-plugin` tự ánh xạ repo sang gói npm: nó đọc `name` trong `package.json` của repo và kiểm `repository.url` của bản `latest` có chứa `Hieupt1904/dsh-tvkt-vi`. Entry **không** khai trường `npm` — bộ kiểm tra từ chối mọi trường ngoài `url`, `name`, `category`, `description`, `icon`, `tarball`.
+
 ## Đường phát hiện: index format 1 chỉ nhận npm
 
 Đã kiểm trên index công bố ngày 2026-11-15 (`https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`, format 1, 5.643 entry):
