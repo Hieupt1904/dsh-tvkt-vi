@@ -195,6 +195,90 @@ Thông báo cập nhật không phụ thuộc việc merge. Chợ đọc `raw.gi
 
 ## Cài sang máy khác
 
+Máy đích cần: `dsh` đã cài, Node ≥ 18, `python3` cho linter. Đăng nhập npm không cần — gói public.
+
+```bash
+dsh plugin --profile web add dsh-tvkt-vi
+```
+
+Profile ghi `^0.4.0` và mount bundle ngay. Nếu máy đích không bật `patchReload: live`, khởi động lại `dsh web` để agent nhận section prompt và provider skill.
+
+### Bốn bước kiểm sau khi cài
+
+```bash
+# 1. cấu hình có row của plugin và preset
+dsh --profile web --dump-config | grep -A1 -E 'id: (dsh-tvkt-vi|preset-tvkt-vi)'
+
+# 2. preset khớp với mode standard của DSH trên máy đó
+node node_modules/dsh-tvkt-vi/scripts/check-drift.mjs
+
+# 3. linter cầm tay chạy được
+printf 'Hệ thống tiến hành kiểm tra.\n' | python3 node_modules/dsh-tvkt-vi/skills/tvkt-vi/scripts/lint-text.py
+
+# 4. trong phiên: /skill tvkt-vi
+#    Folder holding this skill's files: …/node_modules/dsh-tvkt-vi/skills/tvkt-vi
+```
+
+Bước 4 là bằng chứng quyết định. Nếu đường dẫn trỏ `~/.dsh/skills/tvkt-vi`, một bản chép tay đang đè provider của gói — xoá `~/.dsh/skills/tvkt-vi`.
+
+### Khi có phiên bản mới
+
+```bash
+dsh plugin --profile web update dsh-tvkt-vi --latest
+```
+
+Chỉ định phiên bản: `dsh plugin --profile web add dsh-tvkt-vi@0.5.0`. Bản `0.0.0-stage` bị deprecate, đừng ghim vào nó.
+
+Hoặc để chợ báo: **Settings → Plugins → Plugin configuration** liệt kê plugin có bản mới và cập nhật bằng một nút. Cơ chế đọc `raw.githubusercontent.com/Hieupt1904/dsh-tvkt-vi/HEAD/package.json`, nên repo phải giữ public.
+
+### Cài không cần npm registry
+
+Ba đường tương đương, dùng khi mạng chặn registry hoặc cần ghim bản:
+
+```bash
+# tarball đính kèm release (tên cố định, luôn trỏ bản mới nhất)
+dsh plugin --profile web add https://github.com/Hieupt1904/dsh-tvkt-vi/releases/latest/download/dsh-tvkt-vi.tgz
+
+# thẳng từ git
+dsh plugin --profile web add https://github.com/Hieupt1904/dsh-tvkt-vi.git
+
+# từ bản clone cục bộ
+dsh plugin --profile web add /duong/dan/dsh-tvkt-vi
+```
+
+Cả ba đều không cần bước duyệt build script vì gói là JavaScript thuần, không có `prepare`/`postinstall`.
+
+### Chuyển từ bản cài tay
+
+Bản trước khi có plugin dùng ba chỗ rời: mục TVKT trong `~/.dsh/AGENTS.md`, thư mục `~/.dsh/skills/tvkt-vi`, và preset chép tay trong `~/.dsh/profiles/web/cordis.patch.yml`.
+
+```bash
+# gỡ preset chép tay (nếu còn): xoá entry insert chứa preset-tvkt-vi, giữ phần còn lại
+cp ~/.dsh/profiles/web/cordis.patch.yml ~/.dsh/profiles/web/cordis.patch.yml.bak
+$EDITOR ~/.dsh/profiles/web/cordis.patch.yml
+
+# gỡ bản skill chép tay để provider của gói thắng
+mv ~/.dsh/skills/tvkt-vi ~/.dsh/skills/tvkt-vi.bak
+```
+
+Mục TVKT trong `AGENTS.md` thì để nguyên nếu máy đích còn chạy profile khác chưa cài plugin (headless, tui). Bỏ đi nếu chỉ dùng profile web — tiết kiệm khoảng 3 KB mỗi phiên, vì nội dung trùng với section của plugin.
+
+### Gỡ sạch
+
+```bash
+dsh plugin --profile web remove dsh-tvkt-vi
+```
+
+Lệnh này gỡ cả dependency lẫn bundle patch, nên mode `tvkt-vi` biến mất theo. Cấu hình khác trong profile không bị đụng.
+
+## Trạng thái trên chợ plugin
+
+Repo đã public, có topic `dsh-plugin`, release có tarball tên cố định, và entry danh mục đang chờ duyệt: [PR #15602](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/15602). Sau khi merge, entry hiện trong DSH → Plugins → Discover và trong chợ `dshmarket`.
+
+Thông báo cập nhật không phụ thuộc việc merge. Chợ đọc `raw.githubusercontent.com/Hieupt1904/dsh-tvkt-vi/HEAD/package.json` và so `version` với bản đang cài, nên mỗi lần tăng `version` rồi push là máy đã cài sẽ thấy "có bản mới". Repo private thì bước này trả 404 và không có thông báo nào — đó là lý do repo phải public.
+
+## Cài sang máy khác
+
 Cài một lần, sau đó DSH tự kéo cập nhật:
 
 ```bash
