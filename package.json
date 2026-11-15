@@ -51,10 +51,9 @@
       "patch": "./cordis.patch.yml"
     },
     "install": {
-      "preferred": "git",
-      "git": "https://github.com/Hieupt1904/dsh-tvkt-vi.git",
-      "tarball": "https://codeload.github.com/Hieupt1904/dsh-tvkt-vi/tar.gz/refs/heads/main",
-      "zip": "https://codeload.github.com/Hieupt1904/dsh-tvkt-vi/zip/refs/heads/main"
+      "preferred": "tarball",
+      "tarball": "https://github.com/Hieupt1904/dsh-tvkt-vi/releases/latest/download/dsh-tvkt-vi.tgz",
+      "git": "https://github.com/Hieupt1904/dsh-tvkt-vi.git"
     }
   },
   "peerDependencies": {
