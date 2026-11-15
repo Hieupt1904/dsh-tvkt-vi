@@ -67,7 +67,7 @@ test('registry thật: sửa SKILL.md không cần đăng ký lại', { skip }, 
   writeFileSync(path.join(dir, 'SKILL.md'), '# Trước\n\nNội dung cũ.\n')
 
   const skills = await mountRegistry()
-  const dispose = skills.registerProvider(() => createSkillProvider(root))
+  const dispose = skills.registerProvider(() => createSkillProvider({ pkgRoot: root }))
 
   const before = await skills.get('tvkt-vi', {})
   assert.match(before.content, /Trước/)

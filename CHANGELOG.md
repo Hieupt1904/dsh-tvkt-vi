@@ -2,6 +2,24 @@
 
 Theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
 
+## [0.4.0] — 2026-11-15
+
+Đợt này đối chiếu provider với `@deepseek-ai/dsh-skill-office` — provider skill đóng gói chính thức của DSH — và sửa những chỗ lệch.
+
+### Sửa
+
+- **Đọc tệp bất đồng bộ có `signal`.** Trước đây `get()` đọc đồng bộ, không huỷ được khi consumer abort. Nay dùng `readFile` với `options.signal`, đúng hợp đồng "implementations should settle promptly when `options.signal` aborts".
+- **Lỗi đọc không còn giả vờ thành công.** `list()` trả `{ candidates, complete }`: lỗi tạm thời (ENOENT, tệp đang ghi) cho `complete: false` để registry tự thử lại thay vì ghim catalog rỗng; lỗi tồn tại (EACCES, frontmatter hỏng) bỏ entry khỏi catalog.
+- **`get()` ném lỗi thay vì trả `undefined`** khi tệp có mà hỏng, và gọi `control.invalidate()` với lỗi tồn tại.
+- **Cắt frontmatter YAML** khỏi thân skill: trước đây agent đọc cả khối YAML như nội dung.
+- **`resourceBase` dùng dấu `/`** thay vì `path.sep`, để consumer ghép liên kết tương đối trên Windows.
+- **Chẩn đoán bằng tiếng Anh** và ghi qua `ctx.logger`, nơi người vận hành tìm; cảnh báo lặp lại được khử trùng.
+
+### Thêm
+
+- `parseSkill()` xuất khẩu công khai, từ chối frontmatter không đóng.
+- 5 test mới cho các ngữ nghĩa trên (tổng 21).
+
 ## [0.3.0] — 2026-11-15
 
 ### Thêm

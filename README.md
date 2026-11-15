@@ -122,6 +122,20 @@ Hệ quả: mọi mode đều thấy các tool đó mà không cần khai báo. 
 
 Muốn kiểm sau khi cài: mở mode `tvkt-vi`, xem danh sách tool có `run_code` (PTC) cùng `ego_*`, `mcp__*`; thiếu nhóm nào thì đó là lỗi mount của bundle tương ứng, không phải thiếu khai báo trong preset.
 
+## Đúng hợp đồng provider skill
+
+Bản `dsh-tvkt-vi` được đối chiếu với `@deepseek-ai/dsh-skill-office`, provider skill đóng gói chính thức của DSH:
+
+| Hợp đồng | Cách làm |
+|---|---|
+| Huỷ được | `readFile(..., { signal })`, tôn trọng `options.signal` của consumer |
+| Không ghim catalog hỏng | `list()` trả `{ candidates, complete }`; lỗi tạm thời → `complete: false` để registry thử lại |
+| Lỗi tồn tại bị loại | `EACCES`/`EPERM`/`ENOTDIR` và frontmatter hỏng → bỏ entry kèm cảnh báo một lần |
+| Nạp hỏng phải nổi lên | `get()` ném lỗi, không trả `undefined` im lặng; gọi `control.invalidate()` khi lỗi tồn tại |
+| Thân skill sạch | `parseSkill()` cắt frontmatter; metadata lấy từ hằng số trong mã |
+| Đường dẫn đa nền tảng | `resourceBase.path` dùng `/` |
+| Chẩn đoán | tiếng Anh, qua `ctx.logger`, khử trùng lặp |
+
 ## Đúng hợp đồng bundle của DSH
 
 | Yêu cầu | Cách khai | Ghi chú |

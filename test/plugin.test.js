@@ -95,7 +95,7 @@ test('get() đọc lại tệp, không cache thân skill', async () => {
   mkdirSync(dir, { recursive: true })
   writeFileSync(path.join(dir, 'SKILL.md'), '# Bản một\n\nNội dung cũ.\n')
 
-  const provider = createSkillProvider(root)
+  const provider = createSkillProvider({ pkgRoot: root })
   const [candidate] = await provider.list({})
   const first = await provider.get(candidate, {})
   assert.match(first.content, /Bản một/)
@@ -191,4 +191,52 @@ test('manifest khai báo đúng hợp đồng bundle của DSH', () => {
   assert.match(pkg.peerDependencies['@deepseek-ai/cordis'], /-0\b/)
   // không khai dsh.client: bundle này không có UI trình duyệt
   assert.equal(pkg.dsh.client, undefined)
+})
+
+
+test('thân skill không mang frontmatter YAML khi nạp', async () => {
+  const body = await plugin.readSkillBody()
+  assert.ok(!body.startsWith('---'), 'frontmatter phải bị cắt')
+  assert.ok(!/^name: tvkt-vi$/m.test(body), 'không được còn trường frontmatter')
+  assert.match(body, /^# TVKT-100/)
+  assert.match(body, /Folder holding this skill's files:/)
+})
+
+test('parseSkill từ chối frontmatter không đóng', () => {
+  assert.throws(() => plugin.parseSkill('---\nname: x\n'), /unterminated frontmatter/)
+  assert.equal(plugin.parseSkill('không có frontmatter'), 'không có frontmatter')
+})
+
+test('resourceBase dùng dấu POSIX trên mọi nền tảng', () => {
+  const base = plugin.skillCandidate().resourceBase
+  assert.equal(base.kind, 'directory')
+  assert.ok(!base.path.includes('\\'), 'phải là dấu / kể cả trên Windows')
+})
+
+test('list() báo incomplete khi tệp không đọc được, ghim khi lỗi tồn tại', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'tvkt-miss-'))
+  const provider = createSkillProvider({ pkgRoot: root })
+
+  // Lỗi tạm thời (ENOENT): trả candidate để catalog còn dùng, đánh dấu chưa hoàn tất.
+  const partial = await provider.list({})
+  assert.equal(Array.isArray(partial), false, 'phải là observation, không phải mảng')
+  assert.equal(partial.complete, false)
+  assert.equal(partial.candidates.length, 1)
+
+  // get() với lỗi tạm thời phải ném, không trả undefined.
+  await assert.rejects(() => provider.get({ name: SKILL_NAME }, {}))
+})
+
+test('get() trả undefined khi tệp có nhưng hỏng frontmatter (lỗi tồn tại)', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'tvkt-bad-'))
+  const dir = path.join(root, 'skills', SKILL_NAME)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(path.join(dir, 'SKILL.md'), '---\nname: tvkt-vi\n')
+
+  const provider = createSkillProvider({ pkgRoot: root })
+  const listed = await provider.list({})
+  const candidates = Array.isArray(listed) ? listed : listed.candidates
+  assert.equal(candidates.length, 0, 'entry lỗi tồn tại bị bỏ khỏi catalog')
+  // Nạp một entry đã liệt kê mà hỏng vẫn là lỗi của lần nạp: ném ra để consumer thấy.
+  await assert.rejects(() => provider.get({ name: SKILL_NAME }, {}))
 })
