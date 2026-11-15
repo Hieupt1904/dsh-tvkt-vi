@@ -131,7 +131,7 @@ Muốn kiểm sau khi cài: mở mode `tvkt-vi`, xem danh sách tool có `run_co
 | Peer được host chia sẻ | `@deepseek-ai/cordis` trong `peerDependencies`, có `-0` | thiếu nhánh prerelease thì mọi bản pre-release bị loại im lặng |
 | Tiêu đề, mô tả, tài liệu chi tiết | `locale/en.json`, `locale/zh.json`, `docs/DETAIL*.md` | `meta.detail` phải nằm trong thư mục con, không ở gốc gói |
 | Icon | `icon.svg` + trường `icon` trong manifest | SVG tự chứa, dưới 256 KiB |
-| Bản dựng sẵn | `dsh.install.tarball` + asset tên cố định | giữ nguyên `releases/latest/download/dsh-tvkt-vi.tgz` |
+| Bản dựng sẵn | `dsh.install.tarball` + asset tên cố định | **chỉ là gợi ý**: `dshmarket` không đọc trường này, nó đọc `tarball:` của entry danh mục |
 | Không có UI trình duyệt | không khai `dsh.client` | bundle chỉ đóng góp cấu hình và module Node |
 
 Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `test/plugin.test.js`.
@@ -146,6 +146,22 @@ Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `t
 | `lib/**` nói chung | sau khi restart | Node giữ module đã import |
 | `cordis.patch.yml` | ngay, nếu profile bật `patchReload: live` | loader áp lại patch |
 
+
+## Đường phát hiện: index format 1 chỉ nhận npm
+
+Đã kiểm trên index công bố ngày 2026-11-15 (`https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`, format 1, 5.643 entry):
+
+| Sự thật | Hệ quả |
+|---|---|
+| Mọi version trong index đều `source.type = "npm"` — 0 entry từ GitHub | một plugin không publish npm **không vào được** tab Discover lẫn tool `plugin_market` |
+| Entry không có npm bị bộ sinh index bỏ, ghi `skipped.noNpm` | entry danh mục vẫn có (nó là danh sách), nhưng index là cửa khác |
+| `build-index.mjs` đọc `data/npm-map.json` → `{ npm, version, publishedAt, enginesDsh }` | tên gói npm phải trùng tên plugin, hoặc khai qua `npm:` của entry |
+
+Nên có **ba đường**, dùng được độc lập:
+
+1. **`dsh plugin add <URL git>`** — chạy được ngay; đã mô phỏng bằng `npm install github:Hieupt1904/dsh-tvkt-vi` ra 0.3.0, và `hasLoadableEntry()` của chợ trả `true`.
+2. **Nhánh chợ `dshmarket`** — đọc `tarball:` của entry danh mục; `dsh.install.tarball` trong `package.json` **không** phải nguồn nó dùng.
+3. **Index format 1 (Discover)** — cần publish npm; hiện chưa có, và chưa đăng nhập npm trên máy này.
 
 ## Trạng thái trên chợ plugin
 
