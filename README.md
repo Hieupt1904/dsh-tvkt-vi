@@ -133,6 +133,12 @@ Muốn kiểm sau khi cài: mở mode `tvkt-vi`, xem danh sách tool có `run_co
 | `cordis.patch.yml` | ngay, nếu profile bật `patchReload: live` | loader áp lại patch |
 
 
+## Trạng thái trên chợ plugin
+
+Repo đã public, có topic `dsh-plugin`, release có tarball tên cố định, và entry danh mục đang chờ duyệt: [PR #15602](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/15602). Sau khi merge, entry hiện trong DSH → Plugins → Discover và trong chợ `dshmarket`.
+
+Thông báo cập nhật không phụ thuộc việc merge. Chợ đọc `raw.githubusercontent.com/Hieupt1904/dsh-tvkt-vi/HEAD/package.json` và so `version` với bản đang cài, nên mỗi lần tăng `version` rồi push là máy đã cài sẽ thấy "có bản mới". Repo private thì bước này trả 404 và không có thông báo nào — đó là lý do repo phải public.
+
 ## Cài sang máy khác
 
 Cài một lần, sau đó DSH tự kéo cập nhật:
