@@ -1,0 +1,28 @@
+# Changelog
+
+Theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
+
+## [0.2.0] — 2026-11-15
+
+### Thêm
+
+- Preset `tvkt-vi` mang thêm `tool-executor-ptc` (lấy từ preset `ptc`): 24 row, trong đó 23 row khớp `standard`. Hệ quả: `run_code` thành công cụ gọi trực tiếp duy nhất — xem mục "Phạm vi tool" trong README để bỏ lại.
+- `scripts/check-drift.mjs` so cả **id lẫn tên module** với `standard` và `ptc`, có allowlist `INTENTIONAL_EXTRAS`, cảnh báo khi row rời khỏi `ptc`.
+- Test khẳng định preset **không** khai lại plugin ở bundle root (`ego-browser`, `dsh-service`, `tool-agent-team`, `dsh-mattpocock-skills-deck`).
+- Mục "Phạm vi tool của mode" và "Độ trễ của từng loại thay đổi" trong README.
+
+### Sửa
+
+- Skill đăng ký qua `ctx.skills.registerProvider()` thay cho `ctx.skills.register()`: `get()` đọc `SKILL.md` mỗi lần nạp, nên sửa tài liệu không cần restart. Bản cũ giữ thân skill trong bộ nhớ từ lúc mount.
+- Thêm `source: 'bundled'`, `path`, `resourceBase` vào candidate — thiếu `source` thì `register()` nhận nhưng `skills.get()` từ chối với lỗi `loaded skill … source must be a string`.
+- Sửa chú thích thứ tự hạng trong `lib/skill.js`: hạng thấp thắng, nên thứ tự tăng dần là project 100/200 → runtime 250 → provider 300 → user 400 → bundled 600.
+
+## [0.1.0] — 2026-11-13
+
+### Thêm
+
+- Hợp đồng ngôn ngữ TVKT-100 chèn vào system prompt ở order `10150` — sau hướng dẫn công cụ, trước persona suffix.
+- Skill `tvkt-vi`: 30 quy tắc rút gọn, 70 thuật ngữ, ba chế độ DRAFT/REVIEW/REWRITE.
+- Agent preset `tvkt-vi` (mode "Tiếng Việt chuẩn (TVKT-100)") với persona và bộ tool của `standard`.
+- Linter L001–L007 đóng gói trong `vendor/tvkt/`, kèm `scripts/lint-text.py` rà stdin.
+- 9 test, gồm test tích hợp với registry skill thật của DSH.

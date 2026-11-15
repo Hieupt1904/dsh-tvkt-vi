@@ -147,3 +147,10 @@ test('preset khai báo đúng phần thêm PTC và không chép row của PTC', 
     assert.ok(!rows.has(external), `không được khai lại ${external} trong preset`)
   }
 })
+
+test('số phiên bản khớp giữa package.json và metadata của skill', () => {
+  const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+  const meta = readFileSync(fileURLToPath(new URL('../lib/skill.js', import.meta.url)), 'utf8')
+  const inCode = /metadata: \{ version: '([^']+)'/.exec(meta)?.[1]
+  assert.equal(inCode, pkg.version, 'metadata.version trong lib/skill.js phải khớp package.json')
+})

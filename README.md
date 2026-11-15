@@ -2,7 +2,7 @@
 
 Chuẩn tiếng Việt kỹ thuật **TVKT-100** cho [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): một hợp đồng system prompt áp cho mọi mode, một skill nạp theo nhu cầu, một linter chạy được, và một agent mode riêng cho việc rà tài liệu.
 
-Tiếng Việt của agent thường sai theo ba kiểu: dịch máy từ tiếng Anh ("tiến hành kiểm tra", "nhằm mục đích"), đổi tên định danh kỹ thuật, và khẳng định điều chưa kiểm chứng. Plugin này chặn cả ba ở tầng prompt, rồi đưa bộ quy tắc đầy đủ vào một skill để không phải trả token cho nó ở mọi request.
+Tiếng Việt của agent thường sai theo ba kiểu: dịch máy từ tiếng Anh, kiểu ghép động từ rỗng vào trước hành động thật, đổi tên định danh kỹ thuật, và khẳng định điều chưa kiểm chứng. Plugin này chặn cả ba ở tầng prompt, rồi đưa cả 30 quy tắc và 70 thuật ngữ vào một skill để không phải trả token cho chúng ở mọi request.
 
 ## Cài
 
@@ -29,7 +29,7 @@ Khởi động lại `dsh web` nếu profile không bật `patchReload: live`. S
 | Agent mode `tvkt-vi` | preset khai trong `cordis.patch.yml`, persona `dsh-persona` + bộ tool của mode `standard` | chỉ phiên chọn mode mới trả |
 | Linter | `vendor/tvkt/` (bản đóng gói của TVKT-100 v1.0) + `skills/tvkt-vi/scripts/lint-text.py` | chạy cục bộ, không gọi mạng |
 
-Ba lớp này cố ý tách nhau: hợp đồng ngắn là thứ bắt buộc phải có ở mọi request; 30 quy tắc đầy đủ thì không.
+Ba lớp này cố ý tách nhau: hợp đồng ngắn là thứ bắt buộc phải có ở mọi request; bộ 30 quy tắc và 70 thuật ngữ thì không.
 
 ## Dùng
 
@@ -94,7 +94,7 @@ TVKT_HOME=/duong/dan/TVKT-100-v1.0 python3 skills/tvkt-vi/scripts/lint-text.py b
 
 Preset gồm **standard + `tool-executor-ptc`**: 24 row, trong đó 23 row khớp `standard` và một row lấy từ `ptc`.
 
-**CẢNH BÁO:** row đó không phải "thêm một tool" mà **đổi cách gọi tool**. Executor PTC biến `run_code` thành công cụ duy nhất gọi trực tiếp; model viết chương trình gọi các tool khác bên trong. Đây là hành vi của mode `ptc`, phù hợp khi cần gọi nhiều tool một lượt rồi lọc, gộp, đếm kết quả.
+**CẢNH BÁO:** row đó không phải "thêm một tool" mà **đổi cách gọi tool**. Executor PTC biến `run_code` thành công cụ duy nhất gọi trực tiếp; model viết chương trình gọi các tool khác bên trong. Đây là hành vi của mode `ptc`, dùng khi cần gọi nhiều tool một lượt rồi lọc, gộp, đếm kết quả.
 
 Muốn mode chỉ dùng tool trực tiếp như `standard`, xoá ba dòng này khỏi `cordis.patch.yml`, rồi chạy `npm run check-drift`:
 
@@ -132,7 +132,51 @@ Muốn kiểm sau khi cài: mở mode `tvkt-vi`, xem danh sách tool có `run_co
 | `lib/**` nói chung | sau khi restart | Node giữ module đã import |
 | `cordis.patch.yml` | ngay, nếu profile bật `patchReload: live` | loader áp lại patch |
 
-Cố ý chọn provider thay vì `ctx.skills.register()`: bản đăng ký runtime giữ thân skill trong bộ nhớ từ lúc mount, nên sửa tài liệu phải restart mới thấy — không hợp với một bộ chuẩn hay được chỉnh.
+
+## Cài sang máy khác
+
+Cài một lần, sau đó DSH tự kéo cập nhật:
+
+```bash
+# máy đích cần: dsh đã cài, node >= 18, python3 (chỉ cho linter)
+dsh plugin --profile web add https://github.com/Hieupt1904/dsh-tvkt-vi.git
+```
+
+Repro **private**, nên máy đích phải có quyền đọc: dùng `gh auth login` cùng tài khoản, hoặc cấu hình git credential. Nếu chuyển sang public thì lệnh trên chạy với bất kỳ ai:
+
+```bash
+gh repo edit Hieupt1904/dsh-tvkt-vi --visibility public --accept-visibility-change-consequences
+```
+
+Cập nhật về sau (cùng repo, git track `main` của package):
+
+```bash
+dsh plugin --profile web update dsh-tvkt-vi
+node node_modules/dsh-tvkt-vi/scripts/check-drift.mjs   # đối chiếu preset với bản DSH trên máy đích
+```
+
+Kiểm tra sau khi cài, theo thứ tự:
+
+1. `dsh --profile web --dump-config` → phải có `- id: dsh-tvkt-vi` và `- id: preset-tvkt-vi`, không có dòng cảnh báo mới.
+2. Settings → Agent presets → thấy mode **Tiếng Việt chuẩn (TVKT-100)**, không báo "Failed to load".
+3. Mở một phiên chọn mode đó, gọi `/skill tvkt-vi` → `Base directory` phải trỏ vào `node_modules/dsh-tvkt-vi/skills/tvkt-vi`.
+4. Mở rộng: báo cáo nghiên cứu nằm ở repo TVKT-100 của máy gốc, không đi kèm gói này.
+
+### Chuyển từ bản cài tay
+
+Phiên bản trước khi có plugin dùng ba chỗ rời: mục TVKT trong `~/.dsh/AGENTS.md`, thư mục `~/.dsh/skills/tvkt-vi`, và preset chép tay trong `~/.dsh/profiles/web/cordis.patch.yml`. Cài plugin thì nên gỡ hai chỗ sau:
+
+```bash
+# 1. preset chép tay trong patch (nếu còn) — xoá entry insert chứa preset-tvkt-vi
+#    giữ nguyên phần còn lại của tệp
+cp ~/.dsh/profiles/web/cordis.patch.yml ~/.dsh/profiles/web/cordis.patch.yml.bak
+$EDITOR ~/.dsh/profiles/web/cordis.patch.yml
+
+# 2. bản skill chép tay
+mv ~/.dsh/skills/tvkt-vi ~/.dsh/skills/tvkt-vi.bak
+```
+
+Để nguyên mục TVKT trong `~/.dsh/AGENTS.md` nếu máy đích còn chạy profile khác chưa cài plugin (headless, tui). Bỏ đi nếu chỉ dùng profile web — tiết kiệm khoảng 3 KB mỗi phiên, vì nội dung trùng với section của plugin.
 
 ## Gỡ
 
