@@ -2,6 +2,13 @@
 
 Theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
 
+## [0.2.1] — 2026-11-15
+
+### Sửa
+
+- Thân skill không còn vi phạm linter của chính nó: dòng tóm tắt quy tắc 002 và 003 trích nguyên cụm bị cấm nên bị L001/L002 bắt, và hai đoạn của phần 30 quy tắc vượt 5 câu (L005). Viết lại thành mô tả kiểu lỗi thay vì liệt kê cụm từ.
+- Chạy `python3 skills/tvkt-vi/scripts/lint-text.py skills/tvkt-vi/SKILL.md` giờ trả 0 WARNING.
+
 ## [0.2.0] — 2026-11-15
 
 ### Thêm
