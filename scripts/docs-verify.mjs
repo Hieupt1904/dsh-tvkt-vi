@@ -33,6 +33,18 @@ const LINTER = path.join(PKG_ROOT, 'vendor', 'tvkt', 'tools', 'tvkt_lint.py')
 /** Kết luận của một lần verify. */
 export const VERDICTS = ['VERIFIED', 'DOC_DRIFT', 'SPEC_CONFLICT', 'NEEDS_HUMAN_REVIEW']
 
+/**
+ * Trình thông dịch Python dùng cho linter.
+ *
+ * Một chỗ duy nhất để đổi, cùng biến `TVKT_PYTHON` mà tool runtime dùng. Đọc
+ * biến môi trường ở mỗi lần gọi, không chốt lúc import, để test đổi được.
+ * Không suy đoán tên trên Windows: bản này chỉ khai support Linux/macOS.
+ * @returns tên hoặc đường dẫn trình thông dịch.
+ */
+export function pythonExecutable() {
+  return process.env.TVKT_PYTHON ?? 'python3'
+}
+
 /** Phạm vi mặc định khi dự án chưa có `.tvkt/config.json`. */
 export const DEFAULT_CONFIG = {
   schemaVersion: 1,
@@ -131,9 +143,241 @@ export function specHashes(config) {
   return out
 }
 
+/**
+ * Bóc các khối code có rào ra khỏi văn bản trước khi đọc cấu trúc.
+ *
+ * Vì sao cần: một dòng `## Ghi chú` nằm trong khối ```text là ví dụ, không phải
+ * mục H2 của tài liệu. Không bóc thì phép đếm mục trùng báo sai.
+ * @param text - toàn văn Markdown.
+ * @returns văn bản đã thay mọi dòng thuộc khối rào bằng dòng rỗng.
+ */
+export function stripFencedCode(text) {
+  const out = []
+  let fence
+  for (const line of String(text).split('\n')) {
+    const match = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
+    if (fence === undefined) {
+      if (match !== null) {
+        fence = match[1]
+        out.push('')
+        continue
+      }
+      out.push(line)
+      continue
+    }
+    // Dòng đóng phải cùng ký tự, đủ dài, và không còn info string.
+    if (match !== null && match[1][0] === fence[0]
+      && match[1].length >= fence.length && match[2].trim() === '') {
+      fence = undefined
+    }
+    out.push('')
+  }
+  return out.join('\n')
+}
+
+/**
+ * Liệt kê tên mục H2 xuất hiện nhiều hơn một lần.
+ *
+ * Chính sách của repo: mỗi mục hiện hành chỉ có một bản. Hai bản cùng tên làm
+ * người đọc không biết bản nào đúng, và đó chính là kiểu trôi đã xảy ra ở
+ * README 0.5.0.
+ * @param text - toàn văn Markdown.
+ * @returns tên mục trùng, đã sắp xếp.
+ */
+export function duplicateH2(text) {
+  const counts = new Map()
+  for (const line of stripFencedCode(text).split('\n')) {
+    const match = /^##\s+(.+?)\s*$/.exec(line)
+    if (match === null) continue
+    const name = match[1]
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([name]) => name)
+    .sort()
+}
+
+/**
+ * README có tuyên bố repo đã public không.
+ *
+ * Chỉ nhận dạng khẳng định ở đầu dòng ("Repo đã public, ..."). Câu điều kiện
+ * kiểu "Repo private thì bước này trả 404" không phải tuyên bố trạng thái nên
+ * không bị tính.
+ * @param text - toàn văn README.
+ * @returns true khi có khẳng định public.
+ */
+export function claimsRepoPublic(text) {
+  return /^(?:Repo|Repository)\s+(?:đã\s+)?public\b/m.test(stripFencedCode(text))
+}
+
+/**
+ * README có tuyên bố repo đang private không.
+ *
+ * Dạng được nhận phải là khẳng định trạng thái có dấu câu ngay sau đó
+ * ("Repro **private**, nên ..."). Nhờ vậy câu điều kiện
+ * "Repo private thì bước này trả 404" không bị coi là mâu thuẫn.
+ * @param text - toàn văn README.
+ * @returns true khi có khẳng định private.
+ */
+export function claimsRepoPrivate(text) {
+  return /^(?:Repo|Repro|Repository)\s+(?:đã\s+)?(?:là\s+)?\*\*private\*\*\s*[,.]/m.test(stripFencedCode(text))
+}
+
+/**
+ * Tách một version thành bộ ba số để so sánh.
+ * @param value - chuỗi như "24.9.0" hoặc "18".
+ * @returns bộ ba số, hoặc undefined khi không đọc được.
+ */
+export function parseVersionTuple(value) {
+  const match = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?$/.exec(String(value).trim())
+  if (match === null) return undefined
+  return [Number(match[1]), Number(match[2] ?? 0), Number(match[3] ?? 0)]
+}
+
+/**
+ * left có không thấp hơn right không.
+ * @param left - bộ ba số cần kiểm.
+ * @param right - sàn so sánh.
+ * @returns true khi left >= right.
+ */
+export function tupleAtLeast(left, right) {
+  for (let index = 0; index < 3; index += 1) {
+    if (left[index] > right[index]) return true
+    if (left[index] < right[index]) return false
+  }
+  return true
+}
+
+/**
+ * Các canonical fact mà README phải lặp lại đúng như `package.json`.
+ *
+ * Mỗi mục nêu rõ mẫu đọc, giá trị mong đợi và nguồn sự thật. Chỉ đọc đúng mẫu
+ * hẹp này, không quét mọi số giống version, nên câu kể lịch sử không bị bắt oan.
+ */
+export const CANONICAL_README_FACTS = [
+  {
+    id: 'registry-version',
+    label: 'version trên registry npm',
+    pattern: /Bản trên registry:\s*`([^`]+)`/g,
+    expected: pkg => pkg.version,
+    evidence: 'package.json.version',
+    required: true,
+  },
+  {
+    id: 'engines-dsh',
+    label: 'engines.dsh trong bảng hợp đồng bundle',
+    pattern: /engines\.dsh:\s*"([^"]+)"/g,
+    expected: pkg => pkg.engines?.dsh,
+    evidence: 'package.json.engines.dsh',
+    required: true,
+  },
+  {
+    id: 'profile-range',
+    label: 'dải version ghi vào profile',
+    pattern: /Profile ghi\s*`([^`]+)`/g,
+    expected: pkg => `^${pkg.version}`,
+    evidence: 'package.json.version',
+    required: false,
+  },
+  {
+    id: 'install-pin',
+    label: 'version ghim trong lệnh cài',
+    pattern: /dsh-tvkt-vi@(\d[0-9A-Za-z.-]*)/g,
+    expected: pkg => pkg.version,
+    evidence: 'package.json.version',
+    required: false,
+  },
+]
+
+/**
+ * So canonical fact giữa README, `docs/compatibility.md` và `package.json`.
+ *
+ * Hàm thuần: nhận nội dung đã đọc, không mở tệp. Nhờ vậy unit test nuôi được
+ * văn bản tổng hợp mà không phải sửa tài liệu thật.
+ * @param input - `{ pkg, readme, compat }`; readme/compat là chuỗi hoặc undefined.
+ * @returns mảng finding `DOC_DRIFT`.
+ */
+export function checkCanonicalFacts({ pkg, readme, compat }) {
+  const findings = []
+  const drift = (file, detail, evidence) => {
+    findings.push({ kind: 'DOC_DRIFT', file, detail, evidence })
+  }
+
+  // Chính sách hiện tại là exact pin: hai trường phải bằng nhau.
+  if (pkg.engines?.dsh !== pkg.dshTarget) {
+    drift('package.json',
+      `engines.dsh=${pkg.engines?.dsh} khác dshTarget=${pkg.dshTarget}; chính sách hiện tại là exact pin`,
+      'package.json.dshTarget')
+  }
+
+  if (readme === undefined) {
+    drift('README.md', 'thiếu README.md', 'package.json')
+    return findings
+  }
+
+  for (const fact of CANONICAL_README_FACTS) {
+    const expected = String(fact.expected(pkg))
+    const seen = [...readme.matchAll(fact.pattern)].map(match => match[1])
+    if (seen.length === 0) {
+      if (fact.required) {
+        drift('README.md', `không nêu ${fact.label} (mong đợi \`${expected}\`)`, fact.evidence)
+      }
+      continue
+    }
+    for (const value of seen) {
+      if (value !== expected) {
+        drift('README.md',
+          `${fact.label} là \`${value}\`, package.json là \`${expected}\``,
+          fact.evidence)
+      }
+    }
+  }
+
+  // Sàn Node: mọi con số README nêu phải không thấp hơn sàn của package.json.
+  const floor = parseVersionTuple(String(pkg.engines?.node ?? '').replace(/^>=\s*/, ''))
+  for (const match of readme.matchAll(/(?:Node|node)\s*(?:≥|>=)\s*([0-9][0-9.]*)/g)) {
+    const value = parseVersionTuple(match[1])
+    if (value === undefined) {
+      drift('README.md', `sàn Node không đọc được: ${match[1]}`, 'package.json.engines.node')
+      continue
+    }
+    if (floor === undefined || !tupleAtLeast(value, floor)) {
+      drift('README.md',
+        `README nêu Node ≥ ${match[1]}, package.json yêu cầu ${pkg.engines?.node}`,
+        'package.json.engines.node')
+    }
+  }
+
+  if (claimsRepoPublic(readme) && claimsRepoPrivate(readme)) {
+    drift('README.md', 'vừa tuyên bố repo đã public vừa tuyên bố repo đang private',
+      'trạng thái repo chỉ có một giá trị')
+  }
+
+  for (const name of duplicateH2(readme)) {
+    drift('README.md', `mục H2 trùng tên: "${name}"`, 'mỗi mục hiện hành chỉ một bản')
+  }
+
+  if (compat === undefined) {
+    drift('docs/compatibility.md', 'thiếu docs/compatibility.md', 'release gate')
+  } else {
+    if (!compat.includes(String(pkg.version))) {
+      drift('docs/compatibility.md', `không nêu version plugin ${pkg.version}`, 'package.json.version')
+    }
+    if (!compat.includes(String(pkg.engines?.dsh))) {
+      drift('docs/compatibility.md', `không nêu engines.dsh ${pkg.engines?.dsh}`, 'package.json.engines.dsh')
+    }
+    if (!compat.includes(String(pkg.dshTarget))) {
+      drift('docs/compatibility.md', `không nêu dshTarget ${pkg.dshTarget}`, 'package.json.dshTarget')
+    }
+  }
+
+  return findings
+}
+
 /** Chạy linter trên một tệp, trả JSON. */
 function lint(file) {
-  const out = execFileSync('python3', [LINTER, file, '--format', 'json'], {
+  const out = execFileSync(pythonExecutable(), [LINTER, file, '--format', 'json'], {
     cwd: PKG_ROOT,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -149,26 +393,17 @@ function lint(file) {
 export function checkCrossReferences(config) {
   const findings = []
   const pkg = JSON.parse(readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8'))
-  const compatFile = path.join(PKG_ROOT, 'docs', 'compatibility.md')
-  if (existsSync(compatFile)) {
-    const compat = readFileSync(compatFile, 'utf8')
-    if (!compat.includes(pkg.version)) {
-      findings.push({
-        kind: 'DOC_DRIFT',
-        file: 'docs/compatibility.md',
-        detail: `không nêu version plugin ${pkg.version}`,
-        evidence: 'package.json.version',
-      })
-    }
-    if (!compat.includes(String(pkg.dshTarget))) {
-      findings.push({
-        kind: 'DOC_DRIFT',
-        file: 'docs/compatibility.md',
-        detail: `không nêu dshTarget ${pkg.dshTarget}`,
-        evidence: 'package.json.dshTarget',
-      })
-    }
+  const readOptional = relative => {
+    const file = path.join(PKG_ROOT, relative)
+    return existsSync(file) ? readFileSync(file, 'utf8') : undefined
   }
+  // Canonical fact: version, engines.dsh, dshTarget, sàn Node, trạng thái repo,
+  // mục H2 trùng. Đây là phần bắt được drift mà bản 0.5.0 để lọt.
+  findings.push(...checkCanonicalFacts({
+    pkg,
+    readme: readOptional('README.md'),
+    compat: readOptional(path.join('docs', 'compatibility.md')),
+  }))
   // Tệp sinh phải khớp đầu ra generator.
   try {
     execFileSync(process.execPath, [path.join(PKG_ROOT, 'scripts', 'gen-terms-quick.mjs'), '--check'],
