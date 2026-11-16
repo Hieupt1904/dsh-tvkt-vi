@@ -1,0 +1,139 @@
+# CI cho dsh-tvkt-vi.
+#
+# Nguyên tắc:
+#   - Không bao giờ cài HEAD của DSH rồi coi đó là target. Target được pin trong
+#     package.json.dshTarget và trong biến môi trường DSH_TARGET ở đây.
+#   - Không publish từ PR. Mọi bước ở đây chỉ đọc và kiểm tra.
+#   - Mọi lệnh dưới đây cũng chạy được trên máy: xem docs/compatibility.md.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pin: đổi giá trị này phải đổi package.json.dshTarget và docs/compatibility.md.
+  DSH_TARGET: "0.2.2-rc.2"
+  NODE_VERSION: "24.22.3"
+  # Không ghi bytecode: `__pycache__` trong cây làm gate nội dung gói và drift rác.
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Kiểm tra Python cho linter
+        run: python3 --version
+
+      - name: Cài dependency gồm devDependencies
+        run: npm ci --include=dev
+
+      - name: "Engines khớp target đã pin"
+        run: node scripts/check-engine.mjs
+
+      - name: Unit test
+        run: npm test
+
+      - name: "Lint skill tvkt"
+        run: npm run lint:skill
+
+      - name: "Drift cấu trúc preset so với upstream đã vendor"
+        run: npm run check-drift
+
+      - name: "Sinh lại terms-quick.md và so với bản committed"
+        run: npm run check:terms
+
+      - name: "Golden corpus linter phải reproducible"
+        run: python3 tests/golden/generate.py --check
+
+      - name: "docs-verify phải kết luận VERIFIED"
+        run: npm run docs:verify
+
+      - name: "Bench không hồi quy so với baseline đã commit"
+        run: python3 tests/bench/bench.py --compare
+
+      - name: "Nội dung gói sạch"
+        run: node scripts/check-package.mjs
+
+      - name: "npm pack dry-run phải thành công"
+        run: npm pack --dry-run
+
+  security-scan:
+    name: "quét bí mật và đường dẫn tuyệt đối"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Không có đường dẫn tuyệt đối của máy phát triển"
+        run: |
+          set -eu
+          if grep -rIn --exclude-dir=.git --exclude-dir=node_modules \
+              -E '/home/[a-z][A-Za-z0-9._-]+/|/Users/[A-Za-z][A-Za-z0-9._-]+/|C:\\\\Users\\\\' . ; then
+            echo "LOI: con duong dan tuyet doi trong repo"
+            exit 1
+          fi
+          echo "OK: khong co duong dan tuyet doi"
+
+      - name: "Không có mẫu giống bí mật"
+        run: |
+          set -eu
+          if grep -rIn --exclude-dir=.git --exclude-dir=node_modules \
+              -E 'sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----' . ; then
+            echo "LOI: phat hien mau giong bi mat"
+            exit 1
+          fi
+          echo "OK: khong co mau bi mat"
+
+  release-gate:
+    name: "release gate, chỉ khi dispatch"
+    # Không publish. Chỉ kiểm tra điều kiện phát hành.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    needs: [verify, security-scan]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci --include=dev
+
+      - name: "Version đồng bộ giữa package.json, CHANGELOG và metadata skill"
+        run: node scripts/check-release.mjs
+
+      - name: "Không có tệp sinh nào bị dirty"
+        run: |
+          set -eu
+          npm run gen:terms
+          git diff --exit-code -- skills/tvkt-vi/references/terms-quick.md
+          echo "OK: terms-quick.md khop ban committed"
+
+      - name: "Chạy lại toàn bộ kiểm thử ở chế độ release"
+        run: |
+          set -eu
+          npm test
+          npm run lint:skill
+          npm run check-drift
+          npm run check:terms
+          python3 tests/golden/generate.py --check
+          npm run docs:verify
+          python3 tests/bench/bench.py --compare
+          node scripts/check-package.mjs
+          npm pack --dry-run

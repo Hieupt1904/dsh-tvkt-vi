@@ -6,3 +6,9 @@ __pycache__/
 .DS_Store
 npm-debug.log*
 pnpm-debug.log*
+
+# Đầu ra tạm của docs-sync: đề xuất chờ duyệt, không phải nội dung phát hành.
+.tvkt/proposals/
+
+# Không commit bytecode Python.
+**/__pycache__/

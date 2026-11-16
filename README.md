@@ -28,8 +28,11 @@ Khởi động lại `dsh web` nếu profile không bật `patchReload: live`. S
 | Skill `tvkt-vi` | `ctx.skills.registerProvider()` — đọc `SKILL.md` mỗi lần nạp, không chép tệp vào `~/.dsh/skills` | 0 token khi không nạp; ~6 KB khi nạp |
 | Agent mode `tvkt-vi` | preset khai trong `cordis.patch.yml`, persona `dsh-persona` + bộ tool của mode `standard` | chỉ phiên chọn mode mới trả |
 | Linter | `vendor/tvkt/` (bản đóng gói của TVKT-100 v1.0) + `skills/tvkt-vi/scripts/lint-text.py` | chạy cục bộ, không gọi mạng |
+| Tool `tvkt_lint` | `ctx.tools.register()` khi profile có service `tools`; model gọi được, chạy linter trong workspace | 0 token khi không gọi; tự chặn path traversal, có timeout và huỷ theo `exec.signal` |
 
-Ba lớp này cố ý tách nhau: hợp đồng ngắn là thứ bắt buộc phải có ở mọi request; bộ 30 quy tắc và 70 thuật ngữ thì không.
+Bốn lớp này cố ý tách nhau: hợp đồng ngắn là thứ bắt buộc phải có ở mọi request;
+bộ 30 quy tắc và 70 thuật ngữ thì không. Tool là lớp thứ tư vì profile không có
+service `tools` vẫn phải mount được bundle.
 
 ## Dùng
 
@@ -92,7 +95,13 @@ TVKT_HOME=/duong/dan/TVKT-100-v1.0 python3 skills/tvkt-vi/scripts/lint-text.py b
 
 ## Phạm vi tool của mode `tvkt-vi`
 
-Preset gồm **standard + `tool-executor-ptc`**: 24 row, trong đó 23 row khớp `standard` và một row lấy từ `ptc`.
+Preset gồm **standard + `tool-executor-ptc` + `tool-tvkt`**: 25 row, trong đó 23
+row khớp **toàn bộ cấu trúc** của `standard` (không chỉ id/module), một row lấy
+từ `ptc`, và một row mount plugin gốc để có tool `tvkt_lint`.
+
+Cấu trúc này là **EXACT STANDARD BASE + override có chủ ý**. Bản sao nguyên gốc
+của preset `standard` nằm ở `docs/evidence/standard.patch.yml`, kèm sha256 trong
+`docs/compatibility.md`. Kiểm bằng `npm run check-drift`.
 
 **CẢNH BÁO:** row đó không phải "thêm một tool" mà **đổi cách gọi tool**. Executor PTC biến `run_code` thành công cụ duy nhất gọi trực tiếp; model viết chương trình gọi các tool khác bên trong. Đây là hành vi của mode `ptc`, dùng khi cần gọi nhiều tool một lượt rồi lọc, gộp, đếm kết quả.
 
@@ -103,7 +112,9 @@ Muốn mode chỉ dùng tool trực tiếp như `standard`, xoá ba dòng này k
             name: '@deepseek-ai/dsh-tool-executor-ptc'
 ```
 
-Nếu bỏ row, nhớ xoá cả `tool-executor-ptc` khỏi `INTENTIONAL_EXTRAS` trong `scripts/check-drift.mjs`.
+Nếu bỏ row, nhớ xoá mục `rows.tool-executor-ptc` khỏi `INTENTIONAL_DIFFS` trong
+`scripts/check-drift.mjs`, nếu không checker sẽ báo thừa (không còn row nhưng allowlist
+vẫn khai).
 
 Không chép ba khác biệt còn lại của `ptc`, vì chúng là cắt bớt có chủ ý chứ không phải năng lực thêm:
 

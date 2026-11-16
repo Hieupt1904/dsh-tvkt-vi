@@ -22,7 +22,7 @@ compatibility thật, rồi mới nới `engines.dsh`.
 
 | Plugin | DSH (version/tag) | Node | Trạng thái | Ngày kiểm chứng |
 |---|---|---|---|---|
-| `dsh-tvkt-vi` 0.5.0 | `0.2.2-rc.2` | `>=24.9.0`, đo trên `v24.22.3` | Verified: unit + integration + drift cấu trúc preset | 2026-11-15T23:00+07:00 |
+| `dsh-tvkt-vi` 0.5.0 | `0.2.2-rc.2` | `>=24.9.0`, đo trên `v24.22.3` | Verified: unit + integration + **runtime smoke trên profile `dsh` riêng** (session thật, model thật, skill discovery, PTC). Xem `docs/evidence/smoke/` | 2026-11-15T23:12+07:00 |
 
 Cột "Verified" chỉ mang nghĩa: các lệnh ở mục *Bằng chứng* đã chạy và thoát 0
 trên đúng cặp version ghi trong bảng. Nó không có nghĩa "chạy đúng mọi cấu hình".
@@ -67,12 +67,26 @@ trên đúng cặp version ghi trong bảng. Nó không có nghĩa "chạy đún
 3. **`engines.dsh` là một giá trị chính xác.** Semver coi `0.2.2-rc.2` là một
    version cụ thể; nó không khớp `0.2.2-rc.3`. Nâng DSH là thay đổi cần kiểm
    chứng lại, không phải tự động được phép.
-4. **Chưa có runtime smoke.** Bằng chứng hiện tại là unit test, integration
-   test với `SkillRegistry` thật, và đối chiếu cấu trúc preset với bản sao
-   upstream. Chưa có một lần install/mount trên profile `dsh` riêng.
+4. **Runtime smoke đã có, nhưng chưa phủ tool `tvkt_lint` từ model.** Một lần
+   chạy thật trên `DSH_HOME` riêng đã xác nhận: bundle được nhận, preset compose
+   đủ nested config, session mang `agentPreset: "tvkt-vi"`, `skills/list` trả
+   `tvkt-vi` từ đúng thư mục gói, model trích nguyên hợp đồng ngôn ngữ, và
+   `run_code` gọi được `tools.skill`. Chi tiết ở `docs/evidence/smoke/`.
+   **Chưa** quan sát: model gọi `tvkt_lint` trong session sống (không có RPC
+   liệt kê tool), và profile `headless` trong home sạch (lỗi `permission-presets`
+   của profile template, không phải plugin).
 5. **Node floor lấy từ host, không từ code plugin.** Bản thân `lib/*.js` chạy
    được trên Node cũ hơn, nhưng plugin chỉ có nghĩa khi host DSH chạy được, và
    host khai `>=24.9.0`.
+
+## API bổ sung từ 0.5.0
+
+| API | Tệp trong target | Chữ ký |
+|---|---|---|
+| `ctx.tools.register` | `@deepseek-ai/dsh-tools/src/index.ts:128` | `register(definition: ToolDefinition, options?): () => void` |
+| `defineTool` | `@deepseek-ai/dsh-tools/src/schema.ts:555` | `defineTool<S, O>(options: DefineToolOptions<S, O>): ToolDefinition` |
+| `ToolRunContext` | `@deepseek-ai/dsh-tools/src/contracts.ts:245` | `{ ...ToolExecution, deferContext(), concludeTurn() }`, có `agent` và `signal` |
+| `workingDirectory.ensure` | `@deepseek-ai/dsh-working-directory/lib/types/index.d.ts:90` | `ensure(agent: Agent, signal?: AbortSignal): Promise<string>` |
 
 ## Cách kiểm chứng lại
 

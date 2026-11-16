@@ -28,7 +28,18 @@
   "scripts": {
     "test": "node --test",
     "check-drift": "node scripts/check-drift.mjs",
-    "lint:skill": "python3 skills/tvkt-vi/scripts/lint-text.py skills/tvkt-vi/SKILL.md --quiet"
+    "gen:terms": "node scripts/gen-terms-quick.mjs",
+    "check:terms": "node scripts/gen-terms-quick.mjs --check",
+    "lint:skill": "python3 skills/tvkt-vi/scripts/lint-text.py skills/tvkt-vi/SKILL.md --quiet",
+    "lint:text": "python3 skills/tvkt-vi/scripts/lint-text.py",
+    "cli:engine": "node scripts/check-engine.mjs",
+    "cli:release": "node scripts/check-release.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "verify": "npm test && npm run lint:skill && npm run check-drift && npm run check:terms && python3 tests/golden/generate.py --check && npm run check:package && npm run cli:engine && npm run cli:release && npm run docs:verify && npm run bench",
+    "docs:impact": "node scripts/docs-impact.mjs",
+    "docs:verify": "node scripts/docs-verify.mjs",
+    "docs:sync": "node scripts/docs-sync.mjs",
+    "bench": "python3 tests/bench/bench.py --compare"
   },
   "keywords": [
     "dsh",
@@ -69,5 +80,8 @@
     "dsh": "0.2.2-rc.2"
   },
   "dshTarget": "0.2.2-rc.2",
-  "icon": "./icon.svg"
+  "icon": "./icon.svg",
+  "devDependencies": {
+    "js-yaml": "^4.3.2"
+  }
 }

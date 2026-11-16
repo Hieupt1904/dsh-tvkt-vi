@@ -155,19 +155,3 @@ test('CLI trả mã 1 khi có drift và 0 khi sạch', () => {
 test('diffTree không trả kết quả khi hai cây bằng nhau', () => {
   assert.deepEqual(diffTree({ a: 1, b: { c: [1, 2] } }, { a: 1, b: { c: [1, 2] } }, 'rows.x'), [])
 })
-
-test('engines.dsh khớp dshTarget và có evidence trong docs/compatibility.md', () => {
-  const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
-  assert.equal(pkg.engines.dsh, pkg.dshTarget,
-    'engines.dsh phải pin đúng dshTarget khi chưa có CI matrix')
-
-  const compat = readFileSync(path.join(ROOT, 'docs', 'compatibility.md'), 'utf8')
-  assert.ok(compat.includes(pkg.dshTarget),
-    `docs/compatibility.md phải nêu version ${pkg.dshTarget}`)
-  assert.ok(compat.includes(`dsh-tvkt-vi\` ${pkg.version}`) || compat.includes(pkg.version),
-    'ma trận phải nêu version plugin hiện tại')
-
-  // Mọi giá trị trong engines.dsh đều phải có trong ma trận — không khai dải.
-  assert.ok(!/[<>=~^*|]/.test(pkg.engines.dsh), 'không khai dải version dsh')
-  assert.match(pkg.engines.node, /^>=\d+\.\d+\.\d+$/)
-})
