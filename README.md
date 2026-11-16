@@ -179,7 +179,7 @@ Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `t
 dsh plugin --profile web add dsh-tvkt-vi
 ```
 
-Bản trên registry: `0.5.1` (`latest`). Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
+Bản trên registry: `0.5.1`. Trạng thái publish: **CHỜ DUYỆT 2FA** — registry đã nhận bản stage nhưng `latest` vẫn trỏ `0.5.0` cho tới khi chủ tài khoản duyệt. Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
 
 Danh mục `awesome-dsh-plugin` tự ánh xạ repo sang gói npm: nó đọc `name` trong `package.json` của repo và kiểm `repository.url` của bản `latest` có chứa `Hieupt1904/dsh-tvkt-vi`. Entry **không** khai trường `npm` — bộ kiểm tra từ chối mọi trường ngoài `url`, `name`, `category`, `description`, `icon`, `tarball`.
 
@@ -206,7 +206,7 @@ Trạng thái dưới đây kiểm trực tiếp, không suy từ commit. Mốc 
 | Hạng mục | Trạng thái | Bằng chứng |
 |---|---|---|
 | Repo GitHub | **public** | `gh repo view --json visibility` → `"visibility":"PUBLIC"`; `git ls-remote` ẩn danh trả đúng HEAD |
-| npm | `dsh-tvkt-vi@0.5.1`, dist-tag `latest` | `npm view dsh-tvkt-vi version dist-tags` |
+| npm | `0.5.1` đã stage, **chờ duyệt 2FA**; `latest` đang là `0.5.0` | `npm view dsh-tvkt-vi version dist-tags`; đăng nhập npm duyệt bản stage để hoàn tất |
 | Entry danh mục | đã merge | `gh pr view 15602 --repo awesome-dsh-plugin/awesome-dsh-plugin` → `MERGED` lúc 2026-11-15T17:30:30Z |
 | Release tarball | `v0.4.0`, asset `dsh-tvkt-vi.tgz` | `gh release view --json tagName,assets` |
 | Index format 1 (Discover) | **CHƯA XÁC NHẬN** | tải `index.json` (5.643 entry), tìm `dsh-tvkt-vi` được 0 lần khớp |

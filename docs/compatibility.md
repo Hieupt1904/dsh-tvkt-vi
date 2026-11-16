@@ -152,8 +152,9 @@ cuối qua `dsh web`.
    không chứng minh model tự chọn nó.
 5. **Node floor lấy từ host.** `lib/*.js` chạy được trên Node cũ hơn, nhưng
    plugin chỉ có nghĩa khi host DSH chạy được, và host khai `>=24.9.0`.
-6. **Release tarball đi sau npm.** Release GitHub mới nhất là `v0.4.0` trong khi
-   npm có `0.5.0`.
+6. **npm chưa live bản 0.5.1.** Bản này đã stage và chờ duyệt 2FA, nên
+   `latest` vẫn trỏ `0.5.0`. Release GitHub `v0.5.1` đã có, kèm asset tên cố
+   định `dsh-tvkt-vi.tgz`, nên đường tarball không còn đi sau npm như trước.
 7. **Index Discover chưa có entry này.** Kiểm ngày 2026-11-16: tải `index.json`
    (5.643 entry) và tìm `dsh-tvkt-vi` được 0 lần khớp, dù PR danh mục đã merge.
 
@@ -161,7 +162,8 @@ cuối qua `dsh web`.
 
 | Hạng mục | Giá trị |
 |---|---|
-| npm | `dsh-tvkt-vi@0.5.0`, dist-tag `latest`, publish lúc 2026-11-16T01:50:12Z |
+| npm | `0.5.1` đã stage lúc 2026-11-16T09:40+07:00, **chờ duyệt 2FA**; `latest` vẫn là `0.5.0` |
+| Chặn publish | registry trả `409 Cannot publish over previously staged version "0.5.1"` khi publish lại; `npm stage list` không thấy entry nào với token hiện tại, nên bước duyệt phải làm trên npmjs.com |
 | Repo GitHub | public |
 | Entry danh mục | PR #15602 `MERGED` lúc 2026-11-15T17:30:30Z |
 | CI run | `ci` #43788353640, commit `6bdcb6c`, kết luận `success` (trước thay đổi của 0.5.0 hậu kiểm này) |

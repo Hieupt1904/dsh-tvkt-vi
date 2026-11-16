@@ -3,22 +3,22 @@
   "corpus_documents": 10,
   "measurements": 50,
   "latency_ms": {
-    "p50": 3.087,
-    "p95": 6.549,
-    "p99": 8.895,
-    "max": 8.895
+    "p50": 3.654,
+    "p95": 4.929,
+    "p99": 8.872,
+    "max": 8.872
   },
-  "findings_total": 35,
+  "findings_total": 36,
   "findings_by_severity": {
     "ERROR": 0,
     "WARNING": 0,
-    "INFO": 35
+    "INFO": 36
   },
   "findings_by_rule": {
-    "L006": 35
+    "L006": 36
   },
   "blocking_findings": 0,
-  "protected_spans_total": 839,
+  "protected_spans_total": 846,
   "repeats": 5,
   "semantic_source": "first repeat",
   "repeat_mismatches": [],
