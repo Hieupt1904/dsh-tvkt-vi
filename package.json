@@ -1,6 +1,6 @@
 {
   "name": "dsh-tvkt-vi",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Chuẩn tiếng Việt kỹ thuật TVKT-100 cho DeepSeek Harness: hợp đồng system prompt cho mọi mode, skill tvkt-vi, linter L001-L007 và agent mode DRAFT/REVIEW/REWRITE.",
   "type": "module",
   "main": "lib/index.js",
@@ -36,6 +36,7 @@
     "cli:release": "node scripts/check-release.mjs",
     "check:package": "node scripts/check-package.mjs",
     "verify": "npm test && npm run lint:skill && npm run check-drift && npm run check:terms && python3 tests/golden/generate.py --check && npm run check:package && npm run cli:engine && npm run cli:release && npm run docs:verify && npm run bench",
+    "compat:smoke": "node scripts/compat-smoke.mjs",
     "docs:impact": "node scripts/docs-impact.mjs",
     "docs:verify": "node scripts/docs-verify.mjs",
     "docs:sync": "node scripts/docs-sync.mjs",

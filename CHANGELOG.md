@@ -2,6 +2,104 @@
 
 Theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
 
+## [0.5.1] — 2026-11-16
+
+Đợt hậu kiểm sau 0.5.0. Không đổi ngữ nghĩa TVKT-100, không đổi ngưỡng 30/40 tiếng,
+không sửa từ điển, không đổi `dshTarget`. Bản này sửa drift tài liệu, làm
+`docs:verify` bắt được đúng loại drift đó, và thêm smoke chạy trên đúng DSH target.
+
+### Fixed
+
+- **README nêu canonical fact cũ.** Bản 0.5.0 vẫn ghi `0.4.0` trên registry,
+  `Node ≥ 18`, và `engines.dsh: ">=0.2.0-rc.1 <0.3.0-0"` trong khi `package.json`
+  đã là `0.5.0`, `>=24.9.0`, `0.2.2-rc.2`. Nay README khớp `package.json`.
+- **`package-lock.json` lệch `package.json`.** Lock vẫn khai `version: 0.4.0`,
+  `engines.dsh` dải cũ và `node >=18`. Nay cùng giá trị với `package.json`.
+- **README tự mâu thuẫn về trạng thái repo.** Một mục nói repo đã public, một mục
+  sau nói `Repro **private**`. Kiểm trực tiếp: repo public.
+- **Mục H2 trùng trong README.** `Trạng thái trên chợ plugin` và `Cài sang máy
+  khác` mỗi mục có hai bản, bản sau lặp và lệch. Nay mỗi mục một bản.
+- **Trạng thái chợ và release sai.** Entry danh mục đã merge từ
+  `2026-11-15T17:30:30Z` nhưng README còn ghi "đang chờ duyệt"; index công bố
+  chưa có entry. Nay ghi đúng kèm bằng chứng và mốc kiểm.
+- **`bench.py` lấy số ngữ nghĩa từ lần lặp cuối.** Số finding, protected span,
+  per-rule và per-severity giờ lấy từ lần chạy đầu và được đối chiếu với mọi lần
+  lặp; lệch nhau là hồi quy, không im lặng lấy kết quả cuối.
+- **`docs/kaizen.md` nêu số test cũ và nói smoke không nằm trong CI.**
+
+### Added
+
+- **`scripts/compat-smoke.mjs`** — compatibility smoke chạy trên đúng
+  `dshTarget`: dựng cây cài tạm, symlink các gói `@deepseek-ai/*` của bản cài,
+  boot `SystemPrompt` + `SkillRegistry` + `ToolsService` + executor native thật,
+  mount package, rồi kiểm section, skill, tool, kết quả lint và dọn đăng ký khi
+  `dispose`. Không gọi model, không gọi mạng.
+- **`test/section-order.test.js`** — khoá `SECTION_ORDER = 10150` với bảng phân bổ
+  section của bản cài: hai mốc `WEB_SURFACE`/`DEPLOYMENT_PERSONA_SUFFIX` qua API
+  công khai, và phát hiện va chạm với suất đã cấp.
+- **`test/docs-canonical.test.js`** — 14 ca khoá canonical fact: version, sàn
+  Node, dải DSH, mục H2 trùng, mâu thuẫn public/private, và chiều ngược là câu kể
+  lịch sử không bị bắt oan.
+- **`test/bench.test.js`** — số ngữ nghĩa không đổi khi `REPEATS` đi từ 5 sang 10.
+- **`test/portability.test.js`** — quyết định nền tảng có test: `TVKT_PYTHON` được
+  tôn trọng, `docs-verify` không báo VERIFIED khi Python lỗi, và tài liệu phải
+  nêu rõ giới hạn nền tảng.
+- **10 ca golden mới** (tổng 36): fence 5 backtick, fence chưa đóng, link có dấu
+  ngoặc trong URL, thẻ HTML có thuộc tính chứa cụm cấm, block `protected` và
+  `diagnostics`, từ mơ hồ trong mã nội tuyến, từ mơ hồ trong ngoặc kép, NFC/NFD,
+  và `xử lý` theo nghĩa cụ thể.
+- **Job `compat-smoke` trong CI** cài đúng `DSH_TARGET`, chốt `dsh --version`,
+  chạy smoke và các test cần bản cài thật.
+- **SBOM CycloneDX** ở release gate, và **`npm audit --audit-level=high`** ở job
+  security.
+
+### Changed
+
+- **`docs:verify` bắt canonical-fact drift.** Thêm các bất biến: version registry,
+  `engines.dsh`, dải version ghi vào profile, sàn Node không thấp hơn
+  `package.json`, `engines.dsh` bằng `dshTarget`, không mâu thuẫn public/private,
+  không trùng mục H2, và `compatibility.md` nêu đủ version cùng target. Phép kiểm
+  chỉ đọc mẫu hẹp, nên câu kể lịch sử và câu điều kiện không bị bắt oan.
+- **`docs/compatibility.md`** viết lại theo bằng chứng đọc trực tiếp từ bản cài
+  `0.2.2-rc.2`, thêm ma trận nền tảng, ma trận Python, bảng seam API kèm vị trí
+  tệp, và mục nợ nâng cấp của `SECTION_ORDER`.
+- **`.tvkt/README.md`** nêu rõ tệp cấu hình này là repo-maintenance, không phải
+  runtime, kèm bảng trường nào được ai đọc. `generatedPaths` và `rulesetVersion`
+  được ghi đúng là chỉ đọc để báo cáo, không đổi hành vi.
+- **`docs-verify` dùng `TVKT_PYTHON`** thay vì gọi cứng `python3`, cùng biến với
+  tool runtime.
+- **Action trong CI pin bằng commit SHA** thay vì tag trôi.
+- **`baseline.json` của bench sinh lại** vì corpus tài liệu đã đổi (thêm tài liệu
+  và sửa README). Số ngữ nghĩa mới: 10 tài liệu, 31 finding INFO, 0 WARNING.
+
+### Security
+
+- Giữ `permissions: contents: read` ở mọi job; không job nào cần quyền ghi.
+- Pin `actions/checkout`, `actions/setup-node`, `actions/upload-artifact` bằng
+  commit SHA, ghi kèm tên version trong comment.
+- Ghi rõ bước quét bí mật hiện có là **kiểm mẫu chuỗi**, không phải secret
+  scanner đầy đủ: không đọc lịch sử git, không kiểm entropy, không thay được việc
+  quay vòng khóa khi khóa đã lộ.
+- Thêm `npm audit --audit-level=high` cho toàn bộ cây dependency.
+
+### Compatibility
+
+- DSH target vẫn là `!!!0.2.2-rc.2`!!!, không đổi, vì chưa có bằng chứng chạy thật
+  trên version khác.
+- Node `>=24.9.0`; đo trên `v24.22.3`.
+- Python: đo trên `3.12.3` và `3.11.15`, kết quả golden và bench trùng khớp.
+- Nền tảng: Ubuntu trong CI. macOS và Linux khác **CHƯA XÁC NHẬN**. Windows
+  **không** được nhận trong 0.5.x, kèm lý do và tiêu chí nghiệm thu.
+
+### Known limitations
+
+- Kỳ vọng của golden corpus sinh từ chính đầu ra linter, nên `FP = 0` nghĩa là
+  corpus đồng ý với linter, không phải precision thực địa.
+- Hai false positive đã biết: ngoặc kép và `{{…}}` không phải vùng bảo vệ.
+- Model chưa được quan sát là tự gọi `tvkt_lint` trong session sống.
+- Release GitHub mới nhất là `v0.4.0` trong khi npm có `0.5.0`; index Discover
+  chưa có entry.
+- Corpus chỉ hiểu Markdown; `.mdx` chưa hỗ trợ.
 ## [0.5.0] — 2026-11-15
 
 Bản này sửa ba lỗi mà 0.4.0 không phát hiện được vì test và checker đều quá yếu,
