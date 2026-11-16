@@ -184,9 +184,20 @@ test('manifest khai báo đúng hợp đồng bundle của DSH', () => {
   const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml')
   assert.ok(existsSync(fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))))
-  // engines.dsh: DSH từ chối bundle có dải không khớp bản đang chạy
+  // engines.dsh: DSH từ chối bundle có dải không khớp bản đang chạy.
+  // Chiến lược support hiện tại là NARROW: chỉ đúng version đã kiểm chứng.
+  // Xem docs/compatibility.md — mọi giá trị trong engines.dsh phải có evidence.
   assert.equal(typeof pkg.engines.dsh, 'string')
-  assert.match(pkg.engines.dsh, />=0\.2\.0/)
+  assert.equal(pkg.engines.dsh, pkg.dshTarget,
+    'engines.dsh phải pin đúng dshTarget khi chưa có CI matrix')
+  assert.ok(!/[><=~^*|]/.test(pkg.engines.dsh),
+    'không khai dải version khi CI chưa test dải đó')
+  // Node floor phải không thấp hơn floor của host DSH được support.
+  const nodeFloor = /^>=?(\d+)\.(\d+)\.(\d+)$/.exec(pkg.engines.node)
+  assert.ok(nodeFloor, 'engines.node phải là sàn cụ thể')
+  const [, major, minor] = nodeFloor.map(Number)
+  assert.ok(major > 24 || (major === 24 && minor >= 9),
+    'DSH 0.2.2-rc.2 khai engines.node ">=24.9.0"')
   // peer cordis phải có nhánh prerelease tường minh, nếu không pre-release bị loại im lặng
   assert.match(pkg.peerDependencies['@deepseek-ai/cordis'], /-0\b/)
   // không khai dsh.client: bundle này không có UI trình duyệt

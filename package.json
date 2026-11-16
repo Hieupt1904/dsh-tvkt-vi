@@ -1,6 +1,6 @@
 {
   "name": "dsh-tvkt-vi",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Chuẩn tiếng Việt kỹ thuật TVKT-100 cho DeepSeek Harness: hợp đồng system prompt cho mọi mode, skill tvkt-vi, linter L001-L007 và agent mode DRAFT/REVIEW/REWRITE.",
   "type": "module",
   "main": "lib/index.js",
@@ -65,8 +65,8 @@
     "@deepseek-ai/cordis": ">=4.0.0-0 <5.0.0-0"
   },
   "engines": {
-    "node": ">=18",
-    "dsh": ">=0.2.0-rc.1 <0.3.0-0"
+    "node": ">=24.9.0",
+    "dsh": "0.2.2-rc.2"
   },
   "dshTarget": "0.2.2-rc.2",
   "icon": "./icon.svg"
