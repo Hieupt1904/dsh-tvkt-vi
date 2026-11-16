@@ -1,9 +1,10 @@
 # CI cho dsh-tvkt-vi.
 #
 # Nguyên tắc:
-#   - Không bao giờ cài HEAD của DSH rồi coi đó là target. Target được pin trong
+#   - Không bao giờ cài HEAD của DSH rồi coi đó là target. Target pin trong
 #     package.json.dshTarget và trong biến môi trường DSH_TARGET ở đây.
 #   - Không publish từ PR. Mọi bước ở đây chỉ đọc và kiểm tra.
+#   - Action bên thứ ba pin bằng commit SHA, không dùng tag trôi.
 #   - Mọi lệnh dưới đây cũng chạy được trên máy: xem docs/compatibility.md.
 name: ci
 
@@ -28,9 +29,11 @@ jobs:
     name: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
-      - uses: actions/setup-node@v4
+      # actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -71,11 +74,53 @@ jobs:
       - name: "npm pack dry-run phải thành công"
         run: npm pack --dry-run
 
+  compat-smoke:
+    name: "runtime smoke trên đúng DSH target"
+    # Chạy ở mọi PR và mọi push, không lọc theo đường dẫn. Lọc bằng shell
+    # hoặc bằng một action lọc đường dẫn đều thêm một chỗ có thể im lặng bỏ
+    # qua cổng này; bỏ lọc thì gate không bao giờ trượt.
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      # actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Cài dependency gồm devDependencies
+        run: npm ci --include=dev
+
+      - name: "Cài đúng DSH target, không cài HEAD"
+        run: npm install --global "@deepseek-ai/dsh@${DSH_TARGET}"
+
+      - name: "Chốt version bản cài phải bằng target"
+        run: |
+          set -eu
+          installed="$(dsh --version)"
+          echo "dsh --version: $installed"
+          test "$installed" = "$DSH_TARGET"
+
+      - name: "Runtime smoke: mount, section, skill, tool, dispose"
+        run: |
+          set -eu
+          export DSH_INSTALL_MODULES="$(npm root -g)/@deepseek-ai/dsh/node_modules"
+          node scripts/compat-smoke.mjs
+
+      - name: "Unit test chạm bản cài thật"
+        run: |
+          set -eu
+          export DSH_INSTALL_MODULES="$(npm root -g)/@deepseek-ai/dsh/node_modules"
+          node --test test/compat-runtime.test.js test/registry.integration.test.js test/tool.test.js
+
   security-scan:
     name: "quét bí mật và đường dẫn tuyệt đối"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
 
@@ -89,7 +134,11 @@ jobs:
           fi
           echo "OK: khong co duong dan tuyet doi"
 
-      - name: "Không có mẫu giống bí mật"
+      # Đây là kiểm mẫu chuỗi, KHÔNG phải secret scanner đầy đủ. Nó không đọc
+      # lịch sử git, không giải mã transcript, không kiểm entropy, và không thay
+      # được việc quay vòng khóa khi khóa đã lộ. Mẫu nào cũng chỉ là danh sách
+      # đóng những định dạng đã biết.
+      - name: "Không có mẫu giống bí mật (kiểm mẫu chuỗi, không phải secret scanner)"
         run: |
           set -eu
           if grep -rIn --exclude-dir=.git --exclude-dir=node_modules \
@@ -99,16 +148,26 @@ jobs:
           fi
           echo "OK: khong co mau bi mat"
 
+      - name: "Không có dependency production bị cảnh báo mức high trở lên"
+        run: |
+          set -eu
+          npm ci --include=dev
+          # Gói này không có dependency production; audit chạy trên toàn bộ cây
+          # để devDependency cũng không lọt cảnh báo mức high.
+          npm audit --audit-level=high
+
   release-gate:
     name: "release gate, chỉ khi dispatch"
-    # Không publish. Chỉ kiểm tra điều kiện phát hành.
+    # Không publish. Chỉ kiểm tra điều kiện phát hành và sinh SBOM để lưu.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    needs: [verify, security-scan]
+    needs: [verify, security-scan, compat-smoke]
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
-      - uses: actions/setup-node@v4
+      # actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -137,3 +196,13 @@ jobs:
           python3 tests/bench/bench.py --compare
           node scripts/check-package.mjs
           npm pack --dry-run
+
+      - name: "Sinh SBOM để lưu cùng release"
+        run: npm sbom --sbom-format cyclonedx > sbom.cdx.json
+
+      # actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
+          if-no-files-found: error
