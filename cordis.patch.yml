@@ -2,16 +2,26 @@
 #
 # Hai việc:
 #   1. Mount plugin runtime (`dsh-tvkt-vi`): chèn section "Chuẩn tiếng Việt" vào
-#      system prompt của mọi agent và đăng ký skill `tvkt-vi` trong bộ nhớ.
+#      system prompt của mọi agent và đăng ký provider skill `tvkt-vi`.
 #   2. Khai báo agent preset `tvkt-vi` — mode "Tiếng Việt chuẩn (TVKT-100)".
 #
-# CẢNH BÁO BẢO TRÌ: danh sách plugin của preset sao từ mode `standard` của bản
-# DSH đang cài (0.2.2-rc.2). Sau khi nâng cấp DSH, chạy
-# `node scripts/check-drift.mjs` để phát hiện row lệch; một row trỏ module
-# không còn tồn tại làm hỏng cả preset (registry báo "Failed to load").
+# CẤU TRÚC: EXACT STANDARD BASE + override có chủ ý.
+#   - Base: preset `standard` của @deepseek-ai/dsh-web-app@0.2.2-rc.2, chép nguyên
+#     văn kể cả nested config (tool-fs.config.applyPatch,
+#     skill-filesystem.config.customSkillDirs, tool-subagent-control.config.interrupt,
+#     plan-mode section). Bản sao chuẩn nằm ở docs/evidence/standard.patch.yml.
+#   - Override có chủ ý: persona prefix tiếng Việt; thêm row `tool-executor-ptc`
+#     lấy từ preset `ptc` (thay đổi ngữ nghĩa, xem docs/compatibility.md).
+#
+# BẢO TRÌ: sau khi nâng DSH, thay docs/evidence/standard.patch.yml bằng bản sao từ
+# npm ở đúng version mới, rồi chạy `npm run check-drift`. Checker so toàn bộ cây
+# cấu hình, không chỉ id/module; khác biệt ngoài INTENTIONAL_DIFFS làm lệnh fail.
+
 - insert:
     - id: dsh-tvkt-vi
       name: dsh-tvkt-vi
+      # Tool `tvkt_lint` đăng ký thêm qua `ctx.inject(['tools'])` bên trong plugin,
+      # nên profile thiếu service `tools` vẫn mount được bundle.
       inject: [systemPrompt, skills]
 
     - id: preset-tvkt-vi
@@ -104,6 +114,9 @@
             disabled: !!js process.platform !== 'win32'
           - id: tool-fs
             name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              # Set false to drop the apply_patch tool beside edit.
+              applyPatch: false
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
             config:
@@ -114,8 +127,14 @@
             name: '@deepseek-ai/dsh-tool-schedule'
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
+            config:
+              customSkillDirs:
+                - !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@deepseek-ai/dsh-agent-preset/package.json')), 'skills')
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
+          # Tool model-facing của plugin: linter TVKT chạy trong workspace.
+          - id: tool-tvkt
+            name: dsh-tvkt-vi
           - id: command-goal
             name: '@deepseek-ai/dsh-command-goal'
           - id: tool-goal
@@ -130,7 +149,7 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
 
                     Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
 
@@ -166,6 +185,8 @@
             config:
               - id: tool-subagent-control
                 name: '@deepseek-ai/dsh-tool-subagent-control'
+                config:
+                  interrupt: false
               - id: tool-subagent
                 name: '@deepseek-ai/dsh-tool-subagent'
                 config:
