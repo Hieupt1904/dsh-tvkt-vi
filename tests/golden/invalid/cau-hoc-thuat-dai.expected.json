@@ -1,0 +1,37 @@
+{
+  "description": "Câu dài chứa cụm rỗng bị bắt buộc bởi L004.",
+  "labels": [
+    "TP"
+  ],
+  "expect_absent_rules": [
+    "L002",
+    "L003",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [
+    {
+      "rule_id": "L001",
+      "count": 1
+    },
+    {
+      "rule_id": "L004",
+      "count": 1
+    }
+  ],
+  "expect_protected_lines": [],
+  "expect_unique": [
+    "L001:1",
+    "L004:1"
+  ],
+  "observed": {
+    "lint_status": "FINDINGS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 2,
+      "INFO": 0
+    },
+    "protected_span_kinds": []
+  }
+}

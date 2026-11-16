@@ -1,0 +1,33 @@
+{
+  "description": "Cụm không ưu tiên trong văn xuôi bị báo, kèm gợi ý thay thế.",
+  "labels": [
+    "terminology"
+  ],
+  "expect_absent_rules": [
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [
+    {
+      "rule_id": "L001",
+      "count": 2
+    }
+  ],
+  "expect_protected_lines": [],
+  "expect_unique": [
+    "L001:1"
+  ],
+  "observed": {
+    "lint_status": "FINDINGS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 2,
+      "INFO": 0
+    },
+    "protected_span_kinds": []
+  }
+}

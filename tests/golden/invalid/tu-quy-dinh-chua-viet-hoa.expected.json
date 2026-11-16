@@ -1,0 +1,34 @@
+{
+  "description": "Từ quy định viết thường chỉ sinh INFO L006.",
+  "labels": [
+    "TP",
+    "l006-info"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L007"
+  ],
+  "expect_rules": [
+    {
+      "rule_id": "L006",
+      "count": 1
+    }
+  ],
+  "expect_protected_lines": [],
+  "expect_unique": [
+    "L006:1"
+  ],
+  "observed": {
+    "lint_status": "FINDINGS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 0,
+      "INFO": 1
+    },
+    "protected_span_kinds": []
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "corpus_documents": 9,
+  "measurements": 45,
+  "latency_ms": {
+    "p50": 2.28,
+    "p95": 4.254,
+    "p99": 6.714,
+    "max": 6.714
+  },
+  "findings_total": 26,
+  "findings_by_severity": {
+    "ERROR": 0,
+    "WARNING": 0,
+    "INFO": 26
+  },
+  "findings_by_rule": {
+    "L006": 26
+  },
+  "blocking_findings": 0,
+  "protected_spans_total": 604,
+  "note": "Latency đo trên chính cây tài liệu của repo, không phải tải tổng hợp. Số finding là của corpus này, không phải precision — precision nằm ở tests/golden/metrics.json.",
+  "golden": {
+    "schema_version": 1,
+    "corpus_documents": 26,
+    "protected_spans_total": 25,
+    "total_runtime_ms": 5.063,
+    "per_document_ms": 0.195,
+    "totals": {
+      "TP": 153,
+      "FP": 0,
+      "FN": 0
+    },
+    "per_rule": {
+      "L001": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0
+      },
+      "L002": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "L003": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "L004": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "L005": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "L006": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "L007": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "precision": {
+      "L001": 1.0,
+      "L002": 1.0,
+      "L003": 1.0,
+      "L004": 1.0,
+      "L005": 1.0,
+      "L006": 1.0,
+      "L007": 1.0
+    },
+    "recall": {
+      "L001": 1.0,
+      "L002": 1.0,
+      "L003": 1.0,
+      "L004": 1.0,
+      "L005": 1.0,
+      "L006": 1.0,
+      "L007": 1.0
+    },
+    "note": "TP/FP/FN tính theo kỳ vọng đã ghi trong expected.json của từng ca. L006 và L007 là INFO, không dùng làm blocking rule. Precision của rule chỉ có nghĩa trong phạm vi corpus này."
+  }
+}

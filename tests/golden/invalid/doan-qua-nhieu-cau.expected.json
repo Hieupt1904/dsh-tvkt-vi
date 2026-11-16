@@ -1,0 +1,33 @@
+{
+  "description": "Đoạn sáu câu bị bắt bởi L005.",
+  "labels": [
+    "TP"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [
+    {
+      "rule_id": "L005",
+      "count": 1
+    }
+  ],
+  "expect_protected_lines": [],
+  "expect_unique": [
+    "L005:1"
+  ],
+  "observed": {
+    "lint_status": "FINDINGS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 1,
+      "INFO": 0
+    },
+    "protected_span_kinds": []
+  }
+}

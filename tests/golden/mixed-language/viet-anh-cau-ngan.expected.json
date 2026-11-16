@@ -1,0 +1,32 @@
+{
+  "description": "Câu Việt trộn thuật ngữ Anh ngắn không bị báo độ dài.",
+  "labels": [
+    "mixed-language",
+    "TP"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [],
+  "expect_protected_lines": [
+    1
+  ],
+  "expect_unique": [],
+  "observed": {
+    "lint_status": "PASS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 0,
+      "INFO": 0
+    },
+    "protected_span_kinds": [
+      "inline-code"
+    ]
+  }
+}

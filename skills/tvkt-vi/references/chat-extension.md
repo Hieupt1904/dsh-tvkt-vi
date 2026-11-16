@@ -43,7 +43,10 @@ Nguyên tắc: **văn nói dùng từ thuần Việt, thuật ngữ kỹ thuật
 Giữ tiếng Anh khi **bản dịch gây hiểu nhầm hoặc không có tương đương ổn định**:
 
 - Giữ: `commit`, `merge`, `rebase`, `pull request`, `deploy`, `build`, `log`, `token`, `cache`, `queue`, `webhook`, `endpoint`, `payload`, `schema`, `timeout`, `retry`, `feature flag`, `rollback`, `hotfix`.
-- Dịch: authentication → xác thực, authorization → phân quyền, session → phiên, payload (văn bản) → tải trọng, rate limit → giới hạn tốc độ, idempotency → tính lũy đẳng, trace → bản ghi truy vết, index → chỉ mục, backup → bản sao lưu.
+- Dịch thuật ngữ hay gặp:
+  authentication → xác thực; authorization → phân quyền; session → phiên;
+  payload (văn bản) → tải trọng; rate limit → giới hạn tốc độ;
+  idempotency → tính lũy đẳng; trace → bản ghi truy vết; index → chỉ mục; backup → bản sao lưu.
 - Dịch nửa vời là lỗi nặng nhất: `commit` → "cam kết", `deploy` → "triển chiêu", `release` → "giải phóng", `thread` → "sợi chỉ". Sai nghĩa.
 - Lần đầu xuất hiện một thuật ngữ tiếng Anh giữ nguyên: kèm giải thích ngắn trong ngoặc. Lần sau dùng trơn.
 

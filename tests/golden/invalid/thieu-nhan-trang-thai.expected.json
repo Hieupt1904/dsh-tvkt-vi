@@ -1,0 +1,34 @@
+{
+  "description": "Câu nói về kế hoạch thiếu nhãn trạng thái bị bắt bởi L007.",
+  "labels": [
+    "TP",
+    "l007-info"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L006"
+  ],
+  "expect_rules": [
+    {
+      "rule_id": "L007",
+      "count": 1
+    }
+  ],
+  "expect_protected_lines": [],
+  "expect_unique": [
+    "L007:1"
+  ],
+  "observed": {
+    "lint_status": "FINDINGS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 0,
+      "INFO": 1
+    },
+    "protected_span_kinds": []
+  }
+}

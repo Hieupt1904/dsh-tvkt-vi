@@ -1,0 +1,28 @@
+{
+  "description": "Số thập phân, version và đơn vị đo không được cắt câu sai.",
+  "labels": [
+    "TP",
+    "segmentation"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [],
+  "expect_protected_lines": [],
+  "expect_unique": [],
+  "observed": {
+    "lint_status": "PASS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 0,
+      "INFO": 0
+    },
+    "protected_span_kinds": []
+  }
+}
