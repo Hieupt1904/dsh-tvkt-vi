@@ -1,22 +1,22 @@
 {
   "schema_version": 1,
-  "corpus_documents": 26,
-  "protected_spans_total": 25,
-  "total_runtime_ms": 5.063,
-  "per_document_ms": 0.195,
+  "corpus_documents": 36,
+  "protected_spans_total": 36,
+  "total_runtime_ms": 8.025,
+  "per_document_ms": 0.223,
   "totals": {
-    "TP": 153,
+    "TP": 266,
     "FP": 0,
     "FN": 0
   },
   "per_rule": {
     "L001": {
-      "tp": 4,
+      "tp": 5,
       "fp": 0,
       "fn": 0
     },
     "L002": {
-      "tp": 1,
+      "tp": 2,
       "fp": 0,
       "fn": 0
     },

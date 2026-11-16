@@ -20,6 +20,7 @@ import argparse
 import json
 import sys
 import time
+import unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -176,6 +177,74 @@ CASES: list[tuple[str, str, str, list[str], str]] = [
      "Domain và API path dài không làm câu bị đếm quá dài.",
      ["mixed-language", "protected"],
      "Gọi endpoint https://api.example.com/v1/reports/export với tham số lọc.\n"),
+
+    # ---------------- bổ sung: biên của vùng bảo vệ ----------------
+    ("protected", "fence-nam-backtick",
+     "Fence năm backtick chứa fence bốn và ba backtick vẫn là một khối duy nhất.",
+     ["protected", "FN-guard"],
+     "Mở đầu hợp lệ.\n\n"
+     "`````markdown\n"
+     "````text\n"
+     "```\n"
+     "tiến hành kiểm tra cấu hình trước giờ cao điểm của dịch vụ\n"
+     "```\n"
+     "````\n"
+     "`````\n\n"
+     "Kết thúc hợp lệ.\n"),
+    ("protected", "fence-chua-dong",
+     "Fence không có dòng đóng phải bảo vệ tới hết tệp.",
+     ["protected", "FN-guard"],
+     "Mở đầu hợp lệ.\n\n"
+     "```text\n"
+     "tiến hành kiểm tra cấu hình trước giờ cao điểm của dịch vụ\n"
+     "và thực hiện lưu tệp cấu hình vào thư mục làm việc\n"),
+    ("protected", "link-co-dau-ngoac",
+     "Markdown link có dấu ngoặc trong URL không làm vỡ vùng bảo vệ.",
+     ["protected"],
+     "Xem [hướng dẫn cài đặt](https://example.com/tai-lieu_(v2)/cai-dat) trước khi bắt đầu.\n\n"
+     "Mã nội tuyến `tiến hành kiểm tra cấu hình` không bị kiểm.\n\n"
+     "Địa chỉ tham chiếu: https://example.com/a_(b)/tiến-hành-kiểm-tra?x=1\n"),
+    ("protected", "html-tag",
+     "Thuộc tính của thẻ HTML không bị kiểm như văn xuôi.",
+     ["protected"],
+     "<span title=\"tiến hành kiểm tra cấu hình\">Nhãn hiển thị</span>\n"),
+    ("protected", "placeholder-khong-duoc-bao-ve",
+     "FALSE POSITIVE ĐÃ BIẾT: placeholder {{…}} chưa được bảo vệ nên L001 vẫn báo. "
+     "Ca này ghi lại hành vi hiện tại, không phải hành vi mong muốn.",
+     ["known-false-positive"],
+     "Giá trị thay thế: {{tiến hành kiểm tra}}\n"),
+    ("protected", "tvkt-marked-blocks",
+     "Block protected và diagnostics do dự án đánh dấu đều được bảo vệ.",
+     ["protected"],
+     "Văn xuôi hợp lệ.\n\n"
+     "<!-- tvkt:protected:begin -->\n"
+     "tiến hành kiểm tra cấu hình trước giờ cao điểm của dịch vụ\n"
+     "<!-- tvkt:protected:end -->\n\n"
+     "<!-- tvkt:diagnostics:begin -->\n"
+     "thực hiện lưu tệp cấu hình vào thư mục làm việc\n"
+     "<!-- tvkt:diagnostics:end -->\n\n"
+     "Kết thúc hợp lệ.\n"),
+    ("mixed-language", "tu-mo-ho-trong-inline-code",
+     "Từ mơ hồ nằm trong mã nội tuyến không bị báo L002.",
+     ["mixed-language", "protected"],
+     "Từ `ổn định` nằm trong mã nội tuyến.\n"),
+    ("mixed-language", "tu-mo-ho-trong-quote",
+     "FALSE POSITIVE ĐÃ BIẾT: ngoặc kép không phải vùng bảo vệ, nên từ mơ hồ được "
+     "trích dẫn để bàn về nó vẫn bị L002 báo trong câu quy định. So sánh với ca "
+     "tu-mo-ho-trong-inline-code: mã nội tuyến thì được bảo vệ. Ca này ghi lại "
+     "hành vi hiện tại, không phải hành vi mong muốn.",
+     ["known-false-positive"],
+     'Dịch vụ PHẢI phản hồi "nhanh" trong mọi trường hợp.\n'),
+    ("valid", "unicode-nfc-nfd",
+     "Cùng một câu ở dạng NFC và NFD cho cùng kết quả.",
+     ["TP", "unicode"],
+     unicodedata.normalize("NFC", "Hệ thống kiểm tra dữ liệu đầu vào.\n\n")
+     + unicodedata.normalize("NFD", "Hệ thống kiểm tra dữ liệu đầu vào.\n")),
+    ("valid", "xu-ly-dong-tu-cu-the",
+     "Động từ xử lý dùng theo nghĩa cụ thể không bị báo; từ điển chỉ chặn cụm thao tác xử lý.",
+     ["TP", "terminology"],
+     "Hệ thống xử lý đơn hàng trong 2 giây.\n"
+     "Người vận hành xử lý sự cố theo quy trình đã duyệt.\n"),
 ]
 
 SPEC_CASES: list[tuple[str, str, str, str]] = [

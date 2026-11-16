@@ -1,0 +1,38 @@
+{
+  "description": "Fence năm backtick chứa fence bốn và ba backtick vẫn là một khối duy nhất.",
+  "labels": [
+    "protected",
+    "FN-guard"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [],
+  "expect_protected_lines": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "expect_unique": [],
+  "observed": {
+    "lint_status": "PASS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 0,
+      "INFO": 0
+    },
+    "protected_span_kinds": [
+      "fenced-code"
+    ]
+  }
+}

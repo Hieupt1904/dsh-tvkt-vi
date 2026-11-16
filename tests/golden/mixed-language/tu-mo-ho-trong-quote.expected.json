@@ -1,0 +1,33 @@
+{
+  "description": "FALSE POSITIVE ĐÃ BIẾT: ngoặc kép không phải vùng bảo vệ, nên từ mơ hồ được trích dẫn để bàn về nó vẫn bị L002 báo trong câu quy định. So sánh với ca tu-mo-ho-trong-inline-code: mã nội tuyến thì được bảo vệ. Ca này ghi lại hành vi hiện tại, không phải hành vi mong muốn.",
+  "labels": [
+    "known-false-positive"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L003",
+    "L004",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [
+    {
+      "rule_id": "L002",
+      "count": 1
+    }
+  ],
+  "expect_protected_lines": [],
+  "expect_unique": [
+    "L002:1"
+  ],
+  "observed": {
+    "lint_status": "FINDINGS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 1,
+      "INFO": 0
+    },
+    "protected_span_kinds": []
+  }
+}

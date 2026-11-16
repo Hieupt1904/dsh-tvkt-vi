@@ -1,0 +1,37 @@
+{
+  "description": "Block protected và diagnostics do dự án đánh dấu đều được bảo vệ.",
+  "labels": [
+    "protected"
+  ],
+  "expect_absent_rules": [
+    "L001",
+    "L002",
+    "L003",
+    "L004",
+    "L005",
+    "L006",
+    "L007"
+  ],
+  "expect_rules": [],
+  "expect_protected_lines": [
+    3,
+    4,
+    5,
+    7,
+    8,
+    9
+  ],
+  "expect_unique": [],
+  "observed": {
+    "lint_status": "PASS",
+    "summary": {
+      "ERROR": 0,
+      "WARNING": 0,
+      "INFO": 0
+    },
+    "protected_span_kinds": [
+      "diagnostics-block",
+      "protected-block"
+    ]
+  }
+}
