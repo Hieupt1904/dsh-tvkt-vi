@@ -22,7 +22,7 @@ compatibility thật, rồi mới nới `engines.dsh`.
 
 | Plugin | DSH (version/tag) | Node | Trạng thái | Ngày kiểm chứng |
 |---|---|---|---|---|
-| `dsh-tvkt-vi` 0.5.0 | `0.2.2-rc.2` | `>=24.9.0`, đo trên `v24.22.3` | Verified: unit + integration + **runtime smoke trên profile `dsh` riêng** (session thật, model thật, skill discovery, PTC). Xem `docs/evidence/smoke/` | 2026-11-15T23:12+07:00 |
+| `dsh-tvkt-vi` 0.5.0 | `0.2.2-rc.2` | `>=24.9.0`, đo trên `v24.22.3` | Verified: unit + integration + drift + **CI xanh trên Ubuntu** + **runtime smoke** trên profile `dsh` riêng + cài từ npm registry | 2026-11-16T08:52+07:00 |
 
 Cột "Verified" chỉ mang nghĩa: các lệnh ở mục *Bằng chứng* đã chạy và thoát 0
 trên đúng cặp version ghi trong bảng. Nó không có nghĩa "chạy đúng mọi cấu hình".
@@ -87,6 +87,16 @@ trên đúng cặp version ghi trong bảng. Nó không có nghĩa "chạy đún
 | `defineTool` | `@deepseek-ai/dsh-tools/src/schema.ts:555` | `defineTool<S, O>(options: DefineToolOptions<S, O>): ToolDefinition` |
 | `ToolRunContext` | `@deepseek-ai/dsh-tools/src/contracts.ts:245` | `{ ...ToolExecution, deferContext(), concludeTurn() }`, có `agent` và `signal` |
 | `workingDirectory.ensure` | `@deepseek-ai/dsh-working-directory/lib/types/index.d.ts:90` | `ensure(agent: Agent, signal?: AbortSignal): Promise<string>` |
+
+## Bằng chứng phát hành
+
+| Hạng mục | Giá trị |
+|---|---|
+| npm | `dsh-tvkt-vi@0.5.0`, dist-tag `latest` |
+| Tarball shasum | `dfad9d34c65c4f6a183c4ebb09eb725cba8984d4` (khớp bản build local) |
+| CI run | `ci` #43788353640, commit `6bdcb6c`, kết luận `success` (verify 18 s, security scan 5 s) |
+| Cài lại từ registry | `npm install dsh-tvkt-vi@0.5.0` trong thư mục sạch, `import()` chạy được, `readSkillBody()` trả 5911 ký tự |
+| Commit | `d98643d` P1 provider · `c715b06` preset · `78c062a` linter + từ điển · `8e8eafa` tool · `6bdcb6c` CI + docs |
 
 ## Cách kiểm chứng lại
 
