@@ -46,7 +46,10 @@ test('compatibility ghi mốc runtime thay vì chỉ unit test', () => {
 test('kaizen ghi mốc runtime có ngày', () => {
   const kaizen = readFileSync(KAIZEN, 'utf8')
   assert.match(kaizen, /docs\/evidence\/smoke/, 'kaizen phải trỏ tới bằng chứng smoke')
-  assert.match(kaizen, /2026-11-15T23:12\+07:00/, 'kaizen phải ghi mốc thời gian chạy')
+  // Kiểm dạng mốc thời gian, không ghim một giá trị cụ thể: ghim chuỗi là tự tạo
+  // drift, vì mỗi lần đo lại phải sửa cả tài liệu lẫn test.
+  assert.match(kaizen, /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}\+07:00\b/u,
+    'kaizen phải ghi mốc thời gian dạng ISO 8601 kèm múi giờ')
 })
 
 test('smoke evidence không nằm trong gói phát hành', () => {
