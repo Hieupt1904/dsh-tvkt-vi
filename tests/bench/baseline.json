@@ -1,44 +1,47 @@
 {
   "schema_version": 1,
-  "corpus_documents": 9,
-  "measurements": 45,
+  "corpus_documents": 10,
+  "measurements": 50,
   "latency_ms": {
-    "p50": 2.28,
-    "p95": 4.254,
-    "p99": 6.714,
-    "max": 6.714
+    "p50": 3.087,
+    "p95": 6.549,
+    "p99": 8.895,
+    "max": 8.895
   },
-  "findings_total": 26,
+  "findings_total": 35,
   "findings_by_severity": {
     "ERROR": 0,
     "WARNING": 0,
-    "INFO": 26
+    "INFO": 35
   },
   "findings_by_rule": {
-    "L006": 26
+    "L006": 35
   },
   "blocking_findings": 0,
-  "protected_spans_total": 604,
+  "protected_spans_total": 839,
+  "repeats": 5,
+  "semantic_source": "first repeat",
+  "repeat_mismatches": [],
   "note": "Latency đo trên chính cây tài liệu của repo, không phải tải tổng hợp. Số finding là của corpus này, không phải precision — precision nằm ở tests/golden/metrics.json.",
   "golden": {
     "schema_version": 1,
-    "corpus_documents": 26,
-    "protected_spans_total": 25,
-    "total_runtime_ms": 5.063,
-    "per_document_ms": 0.195,
+    "corpus_documents": 36,
+    "protected_spans_total": 36,
+    "total_runtime_ms": 8.025,
+    "per_document_ms": 0.223,
     "totals": {
-      "TP": 153,
+      "TP": 266,
       "FP": 0,
       "FN": 0
     },
     "per_rule": {
       "L001": {
-        "tp": 4,
+        "tp": 5,
         "fp": 0,
         "fn": 0
       },
       "L002": {
-        "tp": 1,
+        "tp": 2,
         "fp": 0,
         "fn": 0
       },

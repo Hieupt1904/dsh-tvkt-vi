@@ -16,12 +16,19 @@ Ngưỡng hồi quy (cố định, không tự nới):
     - p95 latency tăng quá 3x baseline                        → fail
     - số finding WARNING trên corpus giảm (nghi false negative) → fail, trừ khi
       baseline được cập nhật kèm lý do trong CHANGELOG.
+
+Vì sao tách "đo latency" khỏi "đếm ngữ nghĩa": lặp lại một phép lint chỉ để lấy
+mẫu latency. Số finding và số protected span là thuộc tính của tài liệu, không
+phải của số lần đo. Vì vậy chúng lấy từ **lần chạy đầu tiên**, và mọi lần lặp
+được so với lần đầu; lệch nhau là linter không deterministic, tính là hồi quy.
+Đổi `TVKT_BENCH_REPEATS` chỉ đổi số mẫu latency, không đổi số ngữ nghĩa.
 """
 from __future__ import annotations
 
 import argparse
 import glob
 import json
+import os
 import statistics
 import sys
 import time
@@ -35,7 +42,25 @@ sys.path.insert(0, str(PKG / "vendor" / "tvkt" / "tools"))
 from tvkt_lint import lint_text  # noqa: E402
 
 BLOCKING_RULES = ("L001", "L002", "L003", "L004", "L005")
-REPEATS = 5
+
+
+def read_repeats() -> int:
+    """Số lần lặp mỗi tài liệu, chỉ ảnh hưởng số mẫu latency.
+
+    Đọc từ `TVKT_BENCH_REPEATS` để test so được hai mức lặp khác nhau mà không
+    phải sửa tệp. Giá trị không hợp lệ thì dừng hẳn thay vì đoán.
+    """
+    raw = os.environ.get("TVKT_BENCH_REPEATS", "5")
+    try:
+        value = int(raw)
+    except ValueError:
+        raise SystemExit(f"TVKT_BENCH_REPEATS phải là số nguyên, nhận {raw!r}")
+    if value < 1:
+        raise SystemExit(f"TVKT_BENCH_REPEATS phải >= 1, nhận {value}")
+    return value
+
+
+REPEATS = read_repeats()
 
 
 # Thư mục chứa fixture cố tình vi phạm: loại khỏi corpus đo tải.
@@ -64,19 +89,32 @@ def measure() -> dict:
     per_severity: dict[str, int] = {"ERROR": 0, "WARNING": 0, "INFO": 0}
     total_findings = 0
     protected_spans = 0
+    repeat_mismatches: list[str] = []
 
     for path in files:
         try:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeError):
             continue
+        canonical = None
         for _ in range(REPEATS):
             started = time.perf_counter()
             result = lint_text(text, str(path))
             latencies.append((time.perf_counter() - started) * 1000.0)
-        protected_spans += len(result["protected_spans"])
-        total_findings += len(result["findings"])
-        for finding in result["findings"]:
+            if canonical is None:
+                canonical = result
+            elif result != canonical:
+                # Cùng đầu vào mà khác đầu ra: linter không deterministic. Ghi
+                # lại thay vì lấy im lặng kết quả của lần cuối.
+                relative = path.relative_to(PKG).as_posix()
+                if relative not in repeat_mismatches:
+                    repeat_mismatches.append(relative)
+        if canonical is None:
+            continue
+        # Số ngữ nghĩa chỉ lấy từ lần chạy đầu, nên không phụ thuộc REPEATS.
+        protected_spans += len(canonical["protected_spans"])
+        total_findings += len(canonical["findings"])
+        for finding in canonical["findings"]:
             per_rule[finding["rule_id"]] = per_rule.get(finding["rule_id"], 0) + 1
             per_severity[finding["severity"]] = per_severity.get(finding["severity"], 0) + 1
 
@@ -97,6 +135,9 @@ def measure() -> dict:
         "findings_by_rule": dict(sorted(per_rule.items())),
         "blocking_findings": sum(per_rule.get(rule, 0) for rule in BLOCKING_RULES),
         "protected_spans_total": protected_spans,
+        "repeats": REPEATS,
+        "semantic_source": "first repeat",
+        "repeat_mismatches": repeat_mismatches,
         "note": (
             "Latency đo trên chính cây tài liệu của repo, không phải tải tổng hợp. "
             "Số finding là của corpus này, không phải precision — precision nằm ở "
@@ -114,6 +155,10 @@ def golden_metrics() -> dict:
 
 def compare(current: dict, baseline: dict) -> list[str]:
     problems: list[str] = []
+    if current.get("repeat_mismatches"):
+        problems.append(
+            "linter không deterministic, cùng đầu vào khác đầu ra trên: "
+            + ", ".join(current["repeat_mismatches"]))
     base_latency = baseline.get("latency_ms", {})
     if base_latency.get("p95", 0) > 0:
         if current["latency_ms"]["p95"] > base_latency["p95"] * 3:
@@ -162,7 +207,11 @@ def main() -> int:
 
     latency = current["latency_ms"]
     golden = current.get("golden", {})
-    print(f"corpus: {current['corpus_documents']} tệp, {current['measurements']} lần đo")
+    print(f"corpus: {current['corpus_documents']} tệp, {current['measurements']} lần đo "
+          f"({current['repeats']} lần lặp mỗi tệp)")
+    if current.get("repeat_mismatches"):
+        print("CẢNH BÁO: linter không deterministic trên: "
+              + ", ".join(current["repeat_mismatches"]))
     print(f"latency: p50={latency['p50']} ms p95={latency['p95']} ms "
           f"p99={latency['p99']} ms max={latency['max']} ms")
     print(f"findings: {current['findings_total']} "
