@@ -176,8 +176,10 @@ cuối qua `dsh web`.
    không chứng minh model tự chọn nó.
 5. **Node floor lấy từ host.** `lib/*.js` chạy được trên Node cũ hơn, nhưng
    plugin chỉ có nghĩa khi host DSH chạy được, và host khai `>=24.9.0`.
-6. **npm có 0.5.2.** Kiểm ngày 2026-11-19: `latest` trỏ `0.5.2`, publish lúc
-   `2026-11-19T07:21:52Z`. Cài bằng tên gói được, không cần tarball cục bộ.
+6. **Trạng thái npm là dữ liệu sống, không chép vào tài liệu.** Mỗi bản publish
+   làm câu "đã publish" trong chính bản đó thành sai, vì tệp được đóng gói trước
+   khi registry nhận. Đọc bằng `npm view dsh-tvkt-vi version dist-tags`; mốc kiểm
+   gần nhất nằm ở bảng *Bằng chứng phát hành*.
 7. **Index Discover chưa có entry này.** Kiểm ngày 2026-11-16: tải `index.json`
    (5.643 entry) và tìm `dsh-tvkt-vi` được 0 lần khớp, dù PR danh mục đã merge.
 

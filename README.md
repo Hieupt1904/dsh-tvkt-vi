@@ -179,7 +179,7 @@ Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `t
 dsh plugin --profile web add dsh-tvkt-vi
 ```
 
-Version trong gói: `0.5.2`. Trạng thái publish: **đã publish**, `latest` trên npm trỏ `0.5.2` từ 2026-11-19T14:21+07:00. Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
+Version trong gói: `0.5.2`. Trạng thái publish đọc từ registry, không chép vào đây: `npm view dsh-tvkt-vi version dist-tags`. Bảng *Trạng thái trên chợ plugin* bên dưới ghi mốc kiểm gần nhất. Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
 
 Danh mục `awesome-dsh-plugin` tự ánh xạ repo sang gói npm: nó đọc `name` trong `package.json` của repo và kiểm `repository.url` của bản `latest` có chứa `Hieupt1904/dsh-tvkt-vi`. Entry **không** khai trường `npm` — bộ kiểm tra từ chối mọi trường ngoài `url`, `name`, `category`, `description`, `icon`, `tarball`.
 
