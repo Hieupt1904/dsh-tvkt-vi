@@ -1,33 +1,51 @@
 # Ma trận tương thích
 
-Trạng thái: **ĐÃ TRIỂN KHAI** cho đúng cặp version dưới đây. Không version DSH nào
-khác có bằng chứng chạy thật.
+Trạng thái: **ĐÃ TRIỂN KHAI** cho đúng những cặp version dưới đây. Không version
+DSH nào khác có bằng chứng chạy thật.
 
 ## Chiến lược support
 
-Chiến lược hiện tại là **narrow support**: `engines.dsh` pin đúng một version đã
-kiểm chứng, không khai dải. Lý do:
+Chiến lược hiện tại là **narrow support dạng tập pin**: `engines.dsh` liệt kê
+đúng những version DSH đã có bằng chứng chạy thật, nối bằng `||`:
 
-- Dải cũ `>=0.2.0-rc.1 <0.3.0-0` bao trùm 12 version đã publish
-  (`0.2.0-rc.1` … `0.2.2-rc.3`). CI chưa từng chạy trên bất kỳ version nào trong
-  số đó, nên lời khai đó là chưa xác minh.
+```text
+engines.dsh: "0.2.2-rc.2 || 0.2.2-rc.5"
+```
+
+DSH so `engines.dsh` bằng `semver.satisfies` với `includePrerelease`, nên chuỗi
+trên là phép hợp của hai pin chính xác: chỉ `0.2.2-rc.2` và `0.2.2-rc.5` qua
+được cổng, `0.2.2-rc.3` và `0.2.2-rc.4` thì không.
+
+Vì sao không khai dải mở:
+
+- Dải `>=0.2.2-rc.2 <0.3.0-0` khớp cả `0.2.2-rc.3` và `0.2.2-rc.4`, là những
+  version chưa từng được chạy thử. Lời khai đó rộng hơn bằng chứng.
 - Các seam API mà plugin dùng (`skills.registerProvider`, `systemPrompt.section`,
   định dạng bundle patch) là nội bộ và đã đổi giữa các release.
 - Chính upstream công bố trạng thái chưa ổn định. README của
   `deepseek-ai/deepseek-harness` đọc ngày 2026-11-16 ghi: *"DeepSeek Harness is in
   developer preview and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING
-  CHANGES.**"* Lưu ý phạm vi: đó là README ở HEAD của upstream, **không** phải tài
-  liệu của `0.2.2-rc.2`, nên nó không dùng làm contract cho target. Nó chỉ củng cố
-  chiến lược pin hẹp.
+  CHANGES.**"* Đó là README ở HEAD của upstream, không phải tài liệu của target.
 
-Muốn mở rộng: thêm version vào ma trận bên dưới **kèm** một lần chạy
-compatibility thật, rồi mới nới `engines.dsh`.
+Vì sao không pin đúng một version: pin đơn làm DSH từ chối bundle ngay khi bản
+cài lên một rc mới, kể cả khi không có gì hỏng. Cặp `0.2.2-rc.2` và `0.2.2-rc.5`
+là ví dụ đo được: hai cây preset trùng byte, chữ ký API trùng, smoke trên cả hai
+đều đạt, nhưng pin đơn vẫn làm cảnh báo nổ.
+
+Quy ước danh sách: xếp tăng dần, phần tử cuối là version mới nhất đã kiểm chứng
+và cũng là `dshTarget`. `node scripts/check-engine.mjs` từ chối toán tử dải mở,
+danh sách lộn thứ tự, phần tử trùng, và `dshTarget` không nằm trong danh sách.
+
+Muốn thêm một pin: chạy smoke trên đúng version đó, thêm dòng vào ma trận bên
+dưới kèm mốc thời gian, thêm version vào `engines.dsh` và `matrix.dsh` của CI,
+rồi chạy lại `npm run verify`.
 
 ## Ma trận
 
 | Plugin | DSH (version/tag) | Node | Trạng thái | Ngày kiểm chứng |
 |---|---|---|---|---|
-| `dsh-tvkt-vi` 0.5.1 | `0.2.2-rc.2` | `>=24.9.0`, đo trên `v24.22.3` | Verified: unit + tích hợp registry + drift + docs-verify + runtime smoke `scripts/compat-smoke.mjs` | 2026-11-16T09:20+07:00 |
+| `dsh-tvkt-vi` 0.5.2 | `0.2.2-rc.2` | `>=24.9.0`, đo trên `v24.22.3` | Verified: unit + tích hợp registry + drift + docs-verify + runtime smoke `scripts/compat-smoke.mjs` | 2026-11-19T14:10+07:00 |
+| `dsh-tvkt-vi` 0.5.2 | `0.2.2-rc.5` | `>=24.9.0`, đo trên `v24.22.3` | Verified: runtime smoke + drift trên preset `dsh-web-app@0.2.2-rc.5` + unit trên bản cài rc.5 | 2026-11-19T14:10+07:00 |
 
 Cột trạng thái chỉ mang nghĩa: các lệnh ở mục *Bằng chứng* đã chạy và thoát 0
 trên đúng cặp version ghi trong bảng. Nó không có nghĩa "chạy đúng mọi cấu hình".
@@ -68,12 +86,14 @@ dạng mảng, và test lại đường `path`/`symlink`/`timeout`/`abort` trên
 
 | Hạng mục | Giá trị |
 |---|---|
-| Gói | `@deepseek-ai/dsh@0.2.2-rc.2` |
-| Preset nguồn | `@deepseek-ai/dsh-web-app@0.2.2-rc.2` |
+| Gói, pin cũ | `@deepseek-ai/dsh@0.2.2-rc.2` |
+| Gói, pin mới | `@deepseek-ai/dsh@0.2.2-rc.5` |
+| Preset nguồn | `@deepseek-ai/dsh-web-app@0.2.2-rc.2` và `@deepseek-ai/dsh-web-app@0.2.2-rc.5` |
 | `docs/evidence/standard.patch.yml` | sha256 `e40bb192ed3b835312c2acd2ccd64d3bc4b85f80a7bc95b132cb18fbee190b5d` |
 | `docs/evidence/ptc.patch.yml` | sha256 `838665e063dc8bcab4caf24e41ec848373c434df4262feb981306944e1cec7fd` |
-| Nguồn tệp | `npm pack @deepseek-ai/dsh-web-app@0.2.2-rc.2`, thư mục `package/presets/` |
-| `engines.node` của DSH | `>=24.9.0` |
+| Trùng byte giữa hai pin | `diff` trên `presets/standard.patch.yml` và `presets/ptc.patch.yml` giữa rc.2 và rc.5 trả 0 khác biệt, nên hai tệp evidence ở trên dùng được cho cả hai pin |
+| Nguồn tệp | `npm install @deepseek-ai/dsh@0.2.2-rc.5` trong prefix tạm, thư mục `@deepseek-ai/dsh-web-app/presets/` |
+| `engines.node` của DSH | `>=24.9.0`, giống nhau ở cả hai pin |
 
 ### API seam đã đối chiếu
 
@@ -101,7 +121,10 @@ hoặc mã nguồn đi kèm gói.
 `SECTION_ORDER = 10150` trong `lib/contract.js` vẫn hợp lệ với `0.2.2-rc.2`. Bảng
 phân bổ của target (`dsh-system-prompt/src/index.ts:136`) có `WEB_SURFACE: 10100`
 và `DEPLOYMENT_PERSONA_SUFFIX: 10200`, không có mục nào bằng `10150`. Nhờ vậy hợp
-đồng nằm sau phần web surface và trước suffix của persona.
+đồng nằm sau phần web surface và trước suffix của persona. Trên `0.2.2-rc.5`,
+bảng phân bổ có thêm một section persona-prefix đứng trước; smoke đo được hợp
+đồng ở vị trí 2 giữa persona-prefix 1 và persona-suffix 3, tức ràng buộc thứ tự
+vẫn giữ.
 
 **Nợ nâng cấp đã biết:** target chỉ cấp vị trí theo bảng tên cố định; không có
 API cấp phát vị trí cho plugin bên ngoài. Vì vậy `10150` là số tự chọn trong một
@@ -117,7 +140,7 @@ mount package, rồi kiểm từng điểm:
 
 | Kiểm | Kỳ vọng |
 |---|---|
-| `target-version` | bản cài trùng `package.json.dshTarget` |
+| `target-version` | bản cài nằm trong `package.json.engines.dsh` |
 | `bundle-row-resolution` | mọi row `name` trong `cordis.patch.yml` phân giải được trong bản cài |
 | `prompt-section-once` | section `tvkt-vi:language-contract` xuất hiện đúng một lần |
 | `prompt-section-order` | section nằm giữa persona-prefix và persona-suffix |
@@ -145,16 +168,17 @@ cuối qua `dsh web`.
 2. **Bản cài DSH cục bộ có thể đã bị vá.** Máy phát triển này có công cụ
    `dsh-purge` vá `persona.prefix` và section `plan-mode` ngay trong gói cài.
    Vì vậy drift checker mặc định so với bản sao vendor từ npm.
-3. **`engines.dsh` là một giá trị chính xác.** Semver coi `0.2.2-rc.2` là một
-   version cụ thể; nó không khớp `0.2.2-rc.3`. Nâng DSH cần kiểm chứng lại.
+3. **`engines.dsh` là tập pin chính xác, không phải dải.** DSH từ chối bundle
+   khi version đang chạy không nằm trong danh sách. Nâng DSH lên một rc chưa có
+   trong danh sách cần thêm pin kèm một lần chạy smoke trên đúng rc đó.
 4. **Model chưa được quan sát là gọi `tvkt_lint` trong session sống.** Runtime
    smoke chứng minh tool có trong registry và chạy đúng khi được gọi, nhưng
    không chứng minh model tự chọn nó.
 5. **Node floor lấy từ host.** `lib/*.js` chạy được trên Node cũ hơn, nhưng
    plugin chỉ có nghĩa khi host DSH chạy được, và host khai `>=24.9.0`.
-6. **npm chưa live bản 0.5.1.** Bản này đã stage và chờ duyệt 2FA, nên
-   `latest` vẫn trỏ `0.5.0`. Release GitHub `v0.5.1` đã có, kèm asset tên cố
-   định `dsh-tvkt-vi.tgz`, nên đường tarball không còn đi sau npm như trước.
+6. **npm mới có 0.5.1.** Kiểm ngày 2026-11-19: `latest` trỏ `0.5.1`. Bản
+   `0.5.2` trong repo chưa publish, nên muốn dùng phải cài từ tarball cục bộ
+   hoặc chờ publish xong rồi cài bằng tên gói.
 7. **Index Discover chưa có entry này.** Kiểm ngày 2026-11-16: tải `index.json`
    (5.643 entry) và tìm `dsh-tvkt-vi` được 0 lần khớp, dù PR danh mục đã merge.
 
@@ -162,7 +186,7 @@ cuối qua `dsh web`.
 
 | Hạng mục | Giá trị |
 |---|---|
-| npm | `0.5.1` đã stage lúc 2026-11-16T09:40+07:00, **chờ duyệt 2FA**; `latest` vẫn là `0.5.0` |
+| npm | `latest` trỏ `0.5.1`; bản `0.5.2` của repo chưa publish |
 | Chặn publish | registry trả `409 Cannot publish over previously staged version "0.5.1"` khi publish lại; `npm stage list` không thấy entry nào với token hiện tại, nên bước duyệt phải làm trên npmjs.com |
 | Repo GitHub | public |
 | Entry danh mục | PR #15602 `MERGED` lúc 2026-11-15T17:30:30Z |
@@ -184,6 +208,11 @@ python3 tests/bench/bench.py --compare
 node scripts/check-package.mjs
 npm pack --dry-run
 
-# cần bản cài DSH đúng target
+# cần bản cài DSH đúng một pin trong engines.dsh
 DSH_INSTALL_MODULES="$(npm root -g)/@deepseek-ai/dsh/node_modules" npm run compat:smoke
+
+# chạy trên pin còn lại: dựng prefix tạm rồi trỏ vào đó
+npm install --prefix /tmp/dsh-pin @deepseek-ai/dsh@0.2.2-rc.5
+DSH_INSTALL_MODULES=/tmp/dsh-pin/node_modules node scripts/compat-smoke.mjs
+node scripts/check-drift.mjs --standard /tmp/dsh-pin/node_modules/@deepseek-ai/dsh-web-app/presets/standard.patch.yml
 ```

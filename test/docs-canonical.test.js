@@ -39,7 +39,7 @@ function cleanReadme(pkg = PKG) {
     '',
     '## Cài từ npm',
     '',
-    'Bản trên registry: ' + TICK + pkg.version + TICK + ' (' + TICK + 'latest' + TICK + ').',
+    'Version trong gói: ' + TICK + pkg.version + TICK + ' (chưa chắc trùng ' + TICK + 'latest' + TICK + ' của npm).',
     '',
     'Profile ghi ' + TICK + '^' + pkg.version + TICK + ' và mount bundle ngay.',
     '',
@@ -145,10 +145,26 @@ test('public và private cùng lúc bị bắt; câu điều kiện thì không'
   assert.equal(claimsRepoPublic('repo phải giữ public.'), false, 'yêu cầu, không phải tuyên bố')
 })
 
-test('engines.dsh khác dshTarget bị bắt khi chính sách là exact pin', () => {
+test('dải mở trong engines.dsh bị bắt', () => {
   const pkg = { ...PKG, engines: { ...PKG.engines, dsh: '>=0.2.0-rc.1 <0.3.0-0' } }
   const details = driftDetails(cleanReadme(pkg), { pkg, compat: cleanCompat(pkg) })
-  assert.ok(details.some(d => d.includes('exact pin')), JSON.stringify(details))
+  assert.ok(details.some(d => d.includes('dải mở')), JSON.stringify(details))
+})
+
+test('dshTarget không phải phần tử cuối của tập pin bị bắt', () => {
+  const pkg = { ...PKG, dshTarget: '0.2.2-rc.2' }
+  const details = driftDetails(cleanReadme(pkg), { pkg, compat: cleanCompat(pkg) })
+  assert.ok(details.some(d => d.includes('phần tử cuối')), JSON.stringify(details))
+})
+
+test('tập pin xếp lộn thứ tự bị bắt', () => {
+  const pkg = {
+    ...PKG,
+    engines: { ...PKG.engines, dsh: '0.2.2-rc.5 || 0.2.2-rc.2' },
+    dshTarget: '0.2.2-rc.2',
+  }
+  const details = driftDetails(cleanReadme(pkg), { pkg, compat: cleanCompat(pkg) })
+  assert.ok(details.some(d => d.includes('tăng dần')), JSON.stringify(details))
 })
 
 test('compatibility thiếu version hoặc engines.dsh bị bắt', () => {

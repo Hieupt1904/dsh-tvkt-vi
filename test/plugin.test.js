@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import * as plugin from '../lib/index.js'
 import { CONTRACT_TEXT, SECTION_NAME, SECTION_ORDER } from '../lib/contract.js'
 import { SKILL_DESCRIPTION, SKILL_NAME, SKILL_RANK, createSkillProvider } from '../lib/skill.js'
+import { validateDshPins } from '../scripts/dsh-pins.mjs'
 
 const SKILL_FILE = fileURLToPath(new URL('../skills/tvkt-vi/SKILL.md', import.meta.url))
 
@@ -185,19 +186,22 @@ test('manifest khai báo đúng hợp đồng bundle của DSH', () => {
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml')
   assert.ok(existsSync(fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))))
   // engines.dsh: DSH từ chối bundle có dải không khớp bản đang chạy.
-  // Chiến lược support hiện tại là NARROW: chỉ đúng version đã kiểm chứng.
-  // Xem docs/compatibility.md — mọi giá trị trong engines.dsh phải có evidence.
+  // Chiến lược support hiện tại là NARROW: chỉ đúng những version đã kiểm chứng,
+  // nối bằng `||`. Xem docs/compatibility.md — mỗi phần tử phải có evidence và
+  // một dòng trong ma trận, và CI phải chạy đúng từng phần tử đó.
   assert.equal(typeof pkg.engines.dsh, 'string')
-  assert.equal(pkg.engines.dsh, pkg.dshTarget,
-    'engines.dsh phải pin đúng dshTarget khi chưa có CI matrix')
-  assert.ok(!/[><=~^*|]/.test(pkg.engines.dsh),
-    'không khai dải version khi CI chưa test dải đó')
+  const pins = validateDshPins(pkg.engines.dsh, pkg.dshTarget)
+  assert.deepEqual(pins.problems, [], 'engines.dsh phải là tập pin chính xác, xếp tăng dần')
+  assert.ok(pins.pins.includes(pkg.dshTarget), 'dshTarget phải nằm trong engines.dsh')
+  assert.ok(pins.pins.length >= 1, 'phải khai ít nhất một pin')
+  assert.ok(!/[><=~^*]/.test(pkg.engines.dsh),
+    'không khai toán tử dải mở khi CI chưa test cả dải')
   // Node floor phải không thấp hơn floor của host DSH được support.
   const nodeFloor = /^>=?(\d+)\.(\d+)\.(\d+)$/.exec(pkg.engines.node)
   assert.ok(nodeFloor, 'engines.node phải là sàn cụ thể')
   const [, major, minor] = nodeFloor.map(Number)
   assert.ok(major > 24 || (major === 24 && minor >= 9),
-    'DSH 0.2.2-rc.2 khai engines.node ">=24.9.0"')
+    'DSH 0.2.2-rc.5 khai engines.node ">=24.9.0"')
   // peer cordis phải có nhánh prerelease tường minh, nếu không pre-release bị loại im lặng
   assert.match(pkg.peerDependencies['@deepseek-ai/cordis'], /-0\b/)
   // không khai dsh.client: bundle này không có UI trình duyệt

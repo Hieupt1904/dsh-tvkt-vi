@@ -35,6 +35,7 @@ export const REQUIRED = [
   'lib/index.js',
   'lib/contract.js',
   'lib/skill.js',
+  'scripts/dsh-pins.mjs',
   'locale/en.json',
   'locale/zh.json',
   'skills/tvkt-vi/SKILL.md',

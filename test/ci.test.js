@@ -14,15 +14,25 @@ import { fileURLToPath } from 'node:url'
 import { checkEngine } from '../scripts/check-engine.mjs'
 import { checkRelease } from '../scripts/check-release.mjs'
 import { checkPackage, FORBIDDEN_PATTERNS, CONTENT_PATTERNS, REQUIRED } from '../scripts/check-package.mjs'
+import { parseDshPins, validateDshPins } from '../scripts/dsh-pins.mjs'
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 
-test('ma trận CI chỉ khai target đã pin', () => {
+test('ma trận CI khai đúng tập pin của package.json', () => {
   const { readFileSync: read } = { readFileSync }
   const workflow = read(path.join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8')
   const pkg = JSON.parse(read(path.join(ROOT, 'package.json'), 'utf8'))
-  assert.ok(workflow.includes(`DSH_TARGET: "${pkg.dshTarget}"`),
-    'CI phải pin đúng dshTarget của package.json')
+  const pins = parseDshPins(pkg.engines.dsh)
+  const matrix = /dsh:\s*\[([^\]]*)\]/.exec(workflow)
+  assert.ok(matrix !== null, 'CI phải khai matrix.dsh cho job compat-smoke')
+  const listed = matrix[1]
+    .split(',')
+    .map(item => item.trim().replace(/^["']|["']$/g, ''))
+    .filter(item => item !== '')
+  assert.deepEqual(listed, pins,
+    'matrix.dsh phải bằng đúng engines.dsh, cùng thứ tự tăng dần')
+  assert.ok(workflow.includes('@${{ matrix.dsh }}'),
+    'bước cài DSH phải dùng matrix.dsh, không phải một biến môi trường rời')
   assert.ok(workflow.includes('npm ci --include=dev'), 'CI phải cài devDependencies')
   // Không publish từ CI.
   for (const forbidden of ['npm publish', 'npm version', 'git push --tags']) {
@@ -34,13 +44,18 @@ test('check-engine pass trên repo hiện tại', () => {
   const result = checkEngine()
   assert.deepEqual(result.problems, [])
   assert.equal(result.ok, true)
-  assert.equal(result.info.engines.dsh, result.info.dshTarget)
+  assert.deepEqual(result.info.pins, parseDshPins(result.info.engines.dsh))
+  assert.equal(result.info.dshTarget, result.info.pins.at(-1),
+    'dshTarget phải là pin mới nhất trong tập')
 })
 
-test('check-engine từ chối engines.dsh là dải version', () => {
+test('check-engine từ chối dải mở, chỉ nhận tập pin chính xác', () => {
+  for (const open of ['>=0.2.2-rc.2 <0.3.0-0', '^0.2.2-rc.5', '~0.2.2-rc.5', '*']) {
+    assert.equal(validateDshPins(open, '0.2.2-rc.5').ok, false, `phải từ chối ${open}`)
+  }
   const result = checkEngine()
   // Khẳng định trực tiếp trên giá trị hiện tại: đây là bất biến của chiến lược.
-  assert.ok(!/[<>=~^*|]/.test(result.info.engines.dsh))
+  assert.ok(!/[<>=~^*]/.test(result.info.engines.dsh))
 })
 
 test('check-release pass trên repo hiện tại', () => {

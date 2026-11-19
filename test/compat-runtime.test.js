@@ -9,6 +9,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import { resolveInstallModules, runCompatSmoke, smokeScope } from '../scripts/compat-smoke.mjs'
+import { dshPinsInclude, parseDshPins } from '../scripts/dsh-pins.mjs'
 
 const modules = resolveInstallModules()
 const skip = modules === undefined
@@ -20,8 +21,8 @@ test('compat smoke: mọi kiểm đạt trên target đã pin', { skip }, async 
   const failed = report.checks.filter(check => !check.ok)
   assert.deepEqual(failed, [], 'kiểm không đạt: ' + JSON.stringify(failed, null, 1))
   assert.equal(report.verdict, 'VERIFIED')
-  assert.equal(report.runtime.dsh, report.pkg.dshTarget,
-    'smoke phải chạy trên đúng version đã pin, không phải bản cài khác')
+  assert.ok(dshPinsInclude(report.pkg.dsh, report.runtime.dsh),
+    'smoke phải chạy trên một version đã pin: ' + JSON.stringify(parseDshPins(report.pkg.dsh)))
 
   // Mỗi acceptance criterion phải có mặt, không được lặng lẽ bỏ bớt.
   const required = [

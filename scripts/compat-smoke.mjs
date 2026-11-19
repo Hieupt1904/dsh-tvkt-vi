@@ -27,17 +27,32 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
+import { dshPinsInclude } from './dsh-pins.mjs'
+
 const PKG_ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, '')
 
 /** Thư mục chứa các gói con của bản cài DSH. */
 export function resolveInstallModules(explicit) {
-  const candidates = []
-  if (explicit !== undefined) candidates.push(explicit)
-  if (process.env.DSH_INSTALL_MODULES !== undefined) candidates.push(process.env.DSH_INSTALL_MODULES)
+  const roots = []
+  if (explicit !== undefined) roots.push(explicit)
+  if (process.env.DSH_INSTALL_MODULES !== undefined) roots.push(process.env.DSH_INSTALL_MODULES)
   try {
-    const root = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim()
-    candidates.push(path.join(root, '@deepseek-ai', 'dsh', 'node_modules'))
+    roots.push(execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim())
   } catch { /* npm không có thì bỏ qua */ }
+
+  // Ba bố cục cùng tồn tại, và mỗi bố cục cần một đường dẫn khác:
+  //   - npm toàn cục: `<root>/@deepseek-ai/dsh/node_modules`
+  //   - cài cục bộ hoisted: `<root>/@deepseek-ai/*` (root đã là thư mục gói)
+  //   - cài cục bộ lồng nhau: `<root>/node_modules`
+  // Thử lần lượt thay vì đoán, và chỉ nhận thư mục thật sự có cả cordis lẫn
+  // dsh-tools, vì đó mới là điều kiện plugin phân giải được.
+  const candidates = []
+  for (const root of roots) {
+    candidates.push(path.join(root, '@deepseek-ai', 'dsh', 'node_modules'))
+    candidates.push(root)
+    candidates.push(path.join(root, 'node_modules'))
+  }
+
   for (const candidate of candidates) {
     if (existsSync(path.join(candidate, '@deepseek-ai', 'cordis', 'lib', 'index.js'))
       && existsSync(path.join(candidate, '@deepseek-ai', 'dsh-tools', 'lib', 'index.js'))) {
@@ -131,8 +146,8 @@ export async function runCompatSmoke({ modules, timeoutMs = 60_000 } = {}) {
   }
 
   const installed = installedDshVersion(modules)
-  record('target-version', installed === pkg.dshTarget,
-    `bản cài ${installed ?? '(không đọc được)'} · package.json.dshTarget ${pkg.dshTarget}`)
+  record('target-version', dshPinsInclude(pkg.engines?.dsh, installed),
+    `bản cài ${installed ?? '(không đọc được)'} · engines.dsh ${pkg.engines?.dsh}`)
 
   const missingRows = unresolvedBundleRows(modules, pkg)
   record('bundle-row-resolution', missingRows.length === 0,
@@ -229,7 +244,7 @@ export async function runCompatSmoke({ modules, timeoutMs = 60_000 } = {}) {
   return {
     ok: failed.length === 0,
     verdict: failed.length === 0 ? 'VERIFIED' : 'COMPAT_FAILURE',
-    pkg: { name: pkg.name, version: pkg.version, dshTarget: pkg.dshTarget, node: pkg.engines?.node },
+    pkg: { name: pkg.name, version: pkg.version, dshTarget: pkg.dshTarget, dsh: pkg.engines?.dsh, node: pkg.engines?.node },
     runtime: { dsh: installed, node: process.version, python: pythonVersion() },
     checks,
   }

@@ -14,6 +14,8 @@ import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { validateDshPins } from './dsh-pins.mjs'
+
 const PKG_ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, '')
 
 /**
@@ -27,6 +29,9 @@ export function checkRelease() {
   const pkg = JSON.parse(readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8'))
   info.version = pkg.version
   info.dshTarget = pkg.dshTarget
+  const pins = validateDshPins(pkg.engines?.dsh, pkg.dshTarget)
+  info.pins = pins.pins
+  for (const problem of pins.problems) problems.push(problem)
 
   // Metadata version trong lib/skill.js phải khớp package.json.
   const skillSource = readFileSync(path.join(PKG_ROOT, 'lib', 'skill.js'), 'utf8')
@@ -63,6 +68,10 @@ export function checkRelease() {
     const compat = readFileSync(compatFile, 'utf8')
     if (!compat.includes(pkg.version)) problems.push(`docs/compatibility.md thiếu version ${pkg.version}`)
     if (!compat.includes(String(pkg.dshTarget))) problems.push('docs/compatibility.md thiếu dshTarget')
+    // Mỗi pin phải có một dòng riêng: một dòng gộp hai pin là không kiểm được pin còn lại.
+    for (const pin of pins.pins) {
+      if (!compat.includes(pin)) problems.push(`docs/compatibility.md thiếu dòng cho pin ${pin}`)
+    }
   }
 
   // Tệp sinh không được stale.
@@ -79,7 +88,7 @@ export function checkRelease() {
 function main() {
   const result = checkRelease()
   if (result.ok) {
-    console.log(`OK: đủ điều kiện phát hành ${result.info.version} trên DSH ${result.info.dshTarget}.`)
+    console.log(`OK: đủ điều kiện phát hành ${result.info.version} trên DSH ${result.info.pins.join(' || ')}.`)
     console.log('Lưu ý: không publish, không tag. Cần người duyệt thủ công.')
     process.exit(0)
   }

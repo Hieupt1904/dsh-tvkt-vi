@@ -1,8 +1,9 @@
 # CI cho dsh-tvkt-vi.
 #
 # Nguyên tắc:
-#   - Không bao giờ cài HEAD của DSH rồi coi đó là target. Target pin trong
-#     package.json.dshTarget và trong biến môi trường DSH_TARGET ở đây.
+#   - Không bao giờ cài HEAD của DSH rồi coi đó là target. Tập pin nằm trong
+#     package.json.engines.dsh; ma trận job `compat-smoke` phải bằng đúng tập đó,
+#     và mỗi phần tử phải có một dòng trong docs/compatibility.md.
 #   - Không publish từ PR. Mọi bước ở đây chỉ đọc và kiểm tra.
 #   - Action bên thứ ba pin bằng commit SHA, không dùng tag trôi.
 #   - Mọi lệnh dưới đây cũng chạy được trên máy: xem docs/compatibility.md.
@@ -18,8 +19,7 @@ permissions:
   contents: read
 
 env:
-  # Pin: đổi giá trị này phải đổi package.json.dshTarget và docs/compatibility.md.
-  DSH_TARGET: "0.2.2-rc.2"
+  # Node của host DSH được support. Sàn engine của plugin không được thấp hơn.
   NODE_VERSION: "24.22.3"
   # Không ghi bytecode: `__pycache__` trong cây làm gate nội dung gói và drift rác.
   PYTHONDONTWRITEBYTECODE: "1"
@@ -75,10 +75,17 @@ jobs:
         run: npm pack --dry-run
 
   compat-smoke:
-    name: "runtime smoke trên đúng DSH target"
+    name: "runtime smoke trên từng pin DSH"
     # Chạy ở mọi PR và mọi push, không lọc theo đường dẫn. Lọc bằng shell
     # hoặc bằng một action lọc đường dẫn đều thêm một chỗ có thể im lặng bỏ
     # qua cổng này; bỏ lọc thì gate không bao giờ trượt.
+    #
+    # Ma trận phải bằng đúng `package.json.engines.dsh`; test/ci.test.js so cả
+    # hai chiều, nên thêm pin mà quên CI (hoặc ngược lại) là fail.
+    strategy:
+      fail-fast: false
+      matrix:
+        dsh: ["0.2.2-rc.2", "0.2.2-rc.5"]
     runs-on: ubuntu-latest
     steps:
       # actions/checkout@v4
@@ -93,26 +100,37 @@ jobs:
       - name: Cài dependency gồm devDependencies
         run: npm ci --include=dev
 
-      - name: "Cài đúng DSH target, không cài HEAD"
-        run: npm install --global "@deepseek-ai/dsh@${DSH_TARGET}"
+      - name: "Cài đúng pin của ma trận, không cài HEAD"
+        run: npm install --global "@deepseek-ai/dsh@${{ matrix.dsh }}"
 
-      - name: "Chốt version bản cài phải bằng target"
+      - name: "Chốt version bản cài phải nằm trong engines.dsh"
+        env:
+          INSTALLED: "${{ matrix.dsh }}"
         run: |
           set -eu
-          installed="$(dsh --version)"
-          echo "dsh --version: $installed"
-          test "$installed" = "$DSH_TARGET"
+          echo "dsh --version: $(dsh --version)"
+          node -e '
+            const pkg = require("./package.json")
+            const pins = pkg.engines.dsh.split("||").map(pin => pin.trim())
+            if (!pins.includes(process.env.INSTALLED)) {
+              console.error(`FAIL: ${process.env.INSTALLED} không nằm trong ${pkg.engines.dsh}`)
+              process.exit(1)
+            }
+            console.log(`OK: ${process.env.INSTALLED} là một pin đã khai`)
+          '
 
       - name: "Runtime smoke: mount, section, skill, tool, dispose"
         run: |
           set -eu
-          export DSH_INSTALL_MODULES="$(npm root -g)/@deepseek-ai/dsh/node_modules"
+          # npm hoisted đặt gói con ngay dưới root; bản cũ để trong dsh/node_modules.
+          # resolveInstallModules tự thử cả hai, nên chỉ cần trỏ vào root.
+          export DSH_INSTALL_MODULES="$(npm root -g)"
           node scripts/compat-smoke.mjs
 
       - name: "Unit test chạm bản cài thật"
         run: |
           set -eu
-          export DSH_INSTALL_MODULES="$(npm root -g)/@deepseek-ai/dsh/node_modules"
+          export DSH_INSTALL_MODULES="$(npm root -g)"
           node --test test/compat-runtime.test.js test/registry.integration.test.js test/tool.test.js
 
   security-scan:

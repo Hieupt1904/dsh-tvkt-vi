@@ -2,6 +2,60 @@
 
 Theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
 
+## [0.5.2] — 2026-11-19
+
+Bản này chỉ sửa **khai báo tương thích**: không đổi ngữ nghĩa TVKT-100, không đổi
+ngưỡng 30/40 tiếng, không sửa từ điển, không đổi hợp đồng prompt hay thân skill.
+
+### Fixed
+
+- **Pin đúng một version DSH làm bundle bị từ chối trên pin mới.** `engines.dsh`
+  là `0.2.2-rc.2` nên trên DSH `0.2.2-rc.5` plugin manager báo
+  `incompatible with DSH 0.2.2-rc.5 (requires 0.2.2-rc.2)` và đề nghị gỡ.
+
+  Đo trên chính cặp đó: `presets/standard.patch.yml` và `presets/ptc.patch.yml`
+  của `dsh-web-app@0.2.2-rc.2` và `@0.2.2-rc.5` **trùng byte**; chữ ký API plugin
+  dùng trùng; `compat-smoke` đạt cả 11 kiểm trên rc.5. Cùng một mã, hai kết luận:
+  lỗi nằm ở lời khai hẹp hơn bằng chứng, không nằm ở plugin.
+
+### Changed
+
+- **`engines.dsh` thành tập pin chính xác.** Nay là
+  `"0.2.2-rc.2 || 0.2.2-rc.5"`.
+- **Cổng vẫn hẹp đúng bằng bằng chứng.** Semver coi `||` là phép hợp của hai pin
+  chính xác, nên `0.2.2-rc.3` và `0.2.2-rc.4` tiếp tục bị từ chối.
+- **`dshTarget` trỏ `0.2.2-rc.5`.** Quy ước: danh sách xếp tăng dần, phần tử cuối
+  là version mới nhất đã kiểm chứng và là target của mọi lần đo.
+- **`scripts/dsh-pins.mjs` (mới)** — một nguồn duy nhất để tách, kiểm và so tập
+  pin: từ chối toán tử dải mở, phần tử không phải version chính xác, phần tử lặp,
+  danh sách lộn thứ tự, và `dshTarget` không phải phần tử cuối.
+- **`check-engine`, `docs-verify`, `compat-smoke`, `test/*` dùng chung module đó.**
+  Trước đây mỗi nơi tự so `engines.dsh === dshTarget`, nên đổi chính sách phải sửa
+  bốn chỗ và rất dễ sót một chỗ.
+- **`compat-smoke` tự dò ba bố cục cài đặt.** `resolveInstallModules` trước đây
+  chỉ thử `<root>/@deepseek-ai/dsh/node_modules`, nên trên một bản cài hoisted
+  (gói con nằm ngay dưới root) nó lặng lẽ rơi về bản cài khác và smoke đo sai
+  runtime. Nay thử cả `<root>/@deepseek-ai/dsh/node_modules`, `<root>`, và
+  `<root>/node_modules`, và chỉ nhận thư mục thật sự có cả `cordis` lẫn
+  `dsh-tools`.
+- **CI chạy matrix trên từng pin.** `matrix.dsh` phải bằng đúng `engines.dsh` theo
+  cùng thứ tự; `test/ci.test.js` so cả hai chiều nên thêm pin mà quên CI (hoặc
+  ngược lại) là fail. Bước chốt version đọc `engines.dsh` thay vì một biến env rời.
+- **`docs/compatibility.md` viết lại phần chiến lược support**: nêu lý do không
+  dùng dải mở (khớp cả rc.3/rc.4 chưa đo) và lý do không pin đơn (từ chối oan khi
+  DSH lên rc), kèm ma trận hai dòng có mốc thời gian.
+- **`docs-verify` neo canonical fact vào version của gói, không vào `latest` npm.**
+  Giữa bump và publish hai giá trị đó khác nhau, buộc tài liệu phải nói sai một
+  trong hai. Trạng thái registry ghi riêng ở bảng trạng thái chợ.
+
+### Verified
+
+- `compat-smoke` trên `0.2.2-rc.5`: 11/11 kiểm đạt, gồm `prompt-section-order`
+  (section hợp đồng ở vị trí 2, giữa persona-prefix 1 và persona-suffix 3).
+- `check-drift` với `--standard` trỏ preset của `dsh-web-app@0.2.2-rc.5`: 0 drift
+  ngoài ba khác biệt có chủ ý đã khai.
+- `compat-smoke` trên `0.2.2-rc.2` vẫn đạt 11/11: pin cũ không hồi quy.
+
 ## [0.5.1] — 2026-11-16
 
 Đợt hậu kiểm sau 0.5.0. Không đổi ngữ nghĩa TVKT-100, không đổi ngưỡng 30/40 tiếng,

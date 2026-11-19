@@ -2,14 +2,14 @@
 
 Vòng cải tiến liên tục cho plugin TVKT. Mỗi mục dưới đây gắn với một lệnh chạy
 được, không phải khẩu hiệu. Số liệu ghi ở đây là **số đã đo** trên
-`2026-11-16T09:20+07:00`, Node `v24.22.3`, Python `3.12.3` (đối chứng `3.11.15`),
-DSH `0.2.2-rc.2`.
+`2026-11-19T14:10+07:00`, Node `v24.22.3`, Python `3.12.3` (đối chứng `3.11.15`),
+DSH `0.2.2-rc.2` và `0.2.2-rc.5` (hai pin đang khai trong `engines.dsh`).
 
 ## PLAN — KPI và mục tiêu
 
 | KPI | Mục tiêu | Cách đo | Trạng thái hiện tại |
 |---|---|---|---|
-| Install/mount thành công trên support matrix | 100% | `npm run cli:engine` + `npm run compat:smoke` | 1/1 cấu hình đã khai; smoke chạy trong CI ở job `compat-smoke` và chạy lại được trên máy |
+| Install/mount thành công trên support matrix | 100% | `npm run cli:engine` + `npm run compat:smoke` | 2/2 pin đã khai; smoke chạy trong CI ở job `compat-smoke` theo matrix và chạy lại được trên máy |
 | Regression P0/P1 về lifecycle | 0 | `test/provider-lifecycle.test.js` | 0 (10 test, trong đó 1 test fail khi tái hiện lỗi P1 cũ) |
 | Vùng bảo vệ giữ nguyên byte | 100% | `test/linter.test.js`, `test/docs.test.js` | 100% (hash trước/sau) |
 | Ghi trái phép vào đặc tả | 0 | `test/docs.test.js` ca spec-conflict | 0 |
@@ -36,7 +36,9 @@ CI (`.github/workflows/ci.yml`) chạy tự động:
 7. `node scripts/check-package.mjs` — gói không chứa rác, đường dẫn tuyệt đối, bí mật.
 8. `npm pack --dry-run`.
 9. Quét bí mật và đường dẫn tuyệt đối trên toàn repo. Đây là kiểm mẫu chuỗi; nó không thay được một secret scanner.
-10. Job `compat-smoke`: cài đúng `DSH_TARGET`, chốt `dsh --version`, rồi chạy `node scripts/compat-smoke.mjs`.
+10. Job `compat-smoke`: matrix theo từng pin trong `engines.dsh`, cài đúng pin
+    của dòng matrix, chốt version bằng `engines.dsh`, rồi chạy
+    `node scripts/compat-smoke.mjs`.
 
 Chạy trên máy, một lệnh:
 
@@ -47,9 +49,17 @@ python3 tests/bench/bench.py --json
 ```
 
 Runtime smoke **nằm trong CI** từ bước này, ở job `compat-smoke`. Job đó cài đúng
-version trong `DSH_TARGET`, không cài HEAD, và không gọi model nên không cần API
-key. Nó boot service thật của target rồi mount package; phạm vi chi tiết ở
+pin của dòng matrix, không cài HEAD, và không gọi model nên không cần API key. Nó
+boot service thật của pin đó rồi mount package; phạm vi chi tiết ở
 `docs/compatibility.md`.
+
+Chạy trên một pin cụ thể ở máy: dựng prefix tạm rồi trỏ `DSH_INSTALL_MODULES` vào
+đó, đừng cài đè bản đang dùng.
+
+```bash
+npm install --prefix /tmp/dsh-pin @deepseek-ai/dsh@0.2.2-rc.5
+DSH_INSTALL_MODULES=/tmp/dsh-pin/node_modules node scripts/compat-smoke.mjs
+```
 
 Bản ghi lần chạy tay đầu tiên, kèm phần chưa quan sát được, vẫn ở
 `docs/evidence/smoke/README.md`.

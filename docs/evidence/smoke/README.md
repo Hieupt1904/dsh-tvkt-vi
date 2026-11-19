@@ -1,6 +1,11 @@
 # Bằng chứng runtime smoke (2026-11-15)
 
 Đây là **bản ghi một lần chạy thật** của `dsh 0.2.2-rc.2`, không phải mô tả.
+
+Ghi chú 0.5.2: bản ghi dưới đây đo trên pin `0.2.2-rc.2`. Từ 0.5.2, `engines.dsh`
+khai thêm pin `0.2.2-rc.5`; smoke chạy lại được trên pin đó bằng
+`DSH_INSTALL_MODULES` trỏ prefix tạm, và CI chạy matrix qua cả hai pin. Phần
+profile end-to-end trong tài liệu này **chưa** đo lại trên `0.2.2-rc.5`.
 Mục đích: biến "chưa có runtime smoke" thành một mốc có thể kiểm lại.
 
 ## Cách chạy

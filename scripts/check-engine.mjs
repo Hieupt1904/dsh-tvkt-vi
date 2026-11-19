@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Kiểm tra `engines` và `dshTarget` khớp bằng chứng đã vendor.
+ * Kiểm tra `engines.dsh` và `dshTarget` khớp bằng chứng đã vendor.
  *
  * Vì sao tách khỏi `npm test`: đây là gate của release, không phải unit test.
  * Nó đọc dữ liệu thật trên đĩa: `package.json`, `docs/compatibility.md`,
  * `docs/evidence/*.patch.yml` và bản cài DSH nếu có.
+ *
+ * Vì sao `engines.dsh` là tập pin chứ không phải dải: xem `scripts/dsh-pins.mjs`.
  *
  * Dùng:
  *   node scripts/check-engine.mjs
@@ -17,6 +19,8 @@ import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { validateDshPins } from './dsh-pins.mjs'
 
 const PKG_ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, '')
 const DSH_TARGET_ENV = process.env.DSH_TARGET
@@ -67,23 +71,18 @@ export function checkEngine() {
   const problems = []
   const info = {}
   const pkg = JSON.parse(readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8'))
+  const pins = validateDshPins(pkg.engines?.dsh, pkg.dshTarget)
   const target = DSH_TARGET_ENV ?? pkg.dshTarget
 
   info.name = pkg.name
   info.version = pkg.version
   info.dshTarget = pkg.dshTarget
   info.engines = pkg.engines
+  info.pins = pins.pins
 
-  if (pkg.dshTarget === undefined) problems.push('package.json thiếu dshTarget')
-  if (DSH_TARGET_ENV !== undefined && pkg.dshTarget !== DSH_TARGET_ENV) {
-    problems.push(`dshTarget=${pkg.dshTarget} khác DSH_TARGET=${DSH_TARGET_ENV}`)
-  }
-  if (pkg.engines?.dsh === undefined) problems.push('package.json thiếu engines.dsh')
-  if (pkg.engines?.dsh !== target) {
-    problems.push(`engines.dsh=${pkg.engines?.dsh} phải bằng dshTarget=${target}`)
-  }
-  if (typeof pkg.engines?.dsh === 'string' && /[<>=~^*|]/.test(pkg.engines.dsh)) {
-    problems.push(`engines.dsh="${pkg.engines.dsh}" là dải version; chiến lược hiện tại là narrow support`)
+  for (const problem of pins.problems) problems.push(problem)
+  if (DSH_TARGET_ENV !== undefined && !pins.pins.includes(DSH_TARGET_ENV)) {
+    problems.push(`DSH_TARGET=${DSH_TARGET_ENV} không nằm trong engines.dsh`)
   }
 
   if (!existsSync(COMPAT)) {
@@ -92,6 +91,12 @@ export function checkEngine() {
     const compat = readFileSync(COMPAT, 'utf8')
     if (!compat.includes(String(target))) {
       problems.push(`docs/compatibility.md không nêu target ${target}`)
+    }
+    if (!compat.includes(String(pkg.engines?.dsh))) {
+      problems.push(`docs/compatibility.md không nêu nguyên văn engines.dsh "${pkg.engines?.dsh}"`)
+    }
+    for (const pin of pins.pins) {
+      if (!compat.includes(pin)) problems.push(`docs/compatibility.md không nêu pin ${pin}`)
     }
     if (!compat.includes(String(pkg.version))) {
       problems.push(`docs/compatibility.md không nêu plugin version ${pkg.version}`)
@@ -110,10 +115,13 @@ export function checkEngine() {
     info.installedNote = 'không tìm thấy bản cài DSH; bỏ qua đối chiếu runtime'
   } else {
     info.installed = installed
-    if (installed.version !== target) {
-      // Không phải lỗi của gói: máy có thể đang chạy version khác target.
+    if (!pins.pins.includes(installed.version)) {
+      problems.push(`bản cài DSH ${installed.version} không nằm trong engines.dsh (${pkg.engines?.dsh})`)
+    } else if (installed.version !== target) {
+      // Không phải lỗi của gói: máy có thể đang chạy một pin khác đã kiểm chứng.
       info.installedWarning =
-        `bản cài ${installed.version} khác target ${target}; kiểm chứng phải chạy trên đúng target`
+        `bản cài ${installed.version} khác target ${target}; đây là pin hợp lệ, `
+        + 'kiểm chứng đầy đủ phải chạy trên đúng target'
     }
     // Node floor của plugin không được thấp hơn floor của host DSH.
     const hostFloor = /^>=(\d+)\.(\d+)\.(\d+)$/.exec(installed.node ?? '')
@@ -141,8 +149,8 @@ function main() {
   }
   if (result.info.installedWarning) console.log(`CẢNH BÁO: ${result.info.installedWarning}`)
   if (result.ok) {
-    console.log(`OK: ${result.info.name}@${result.info.version} pin DSH ${result.info.dshTarget}, `
-      + `node ${result.info.engines.node}`)
+    console.log(`OK: ${result.info.name}@${result.info.version} pin DSH ${result.info.pins.join(' || ')}, `
+      + `node ${result.info.engines.node}, target ${result.info.dshTarget}`)
     process.exit(0)
   }
   console.log(`ENGINE: ${result.problems.length} mâu thuẫn`)

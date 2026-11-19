@@ -88,7 +88,7 @@ TVKT_HOME=/duong/dan/TVKT-100-v1.0 python3 skills/tvkt-vi/scripts/lint-text.py b
 - **Linter phủ 7/30 quy tắc.** TVKT-001, 004, 006-010, 012-015, 017-030 cần đọc hiểu; PASS không chứng minh tài liệu đúng kỹ thuật (TVKT-029).
 - **Đếm "tiếng" bằng khoảng trắng.** Tiếng Việt ghép từ bằng khoảng trắng nên "người dùng" bị tính 2 đơn vị; ngưỡng 30/40 là gợi ý, không phải luật cứng.
 - **L006 bắt nhầm.** "phải", "nên", "không được" dùng như từ thường vẫn bị báo INFO. Đó là mức thông tin, không phải lỗi.
-- **Preset phụ thuộc bản DSH.** Danh sách 23 row trong `cordis.patch.yml` sao từ mode `standard` của DSH `0.2.2-rc.2`. Sau khi nâng cấp DSH, chạy `node scripts/check-drift.mjs`; một row trỏ module không còn tồn tại làm hỏng cả preset.
+- **Preset phụ thuộc bản DSH.** Danh sách 23 row trong `cordis.patch.yml` sao từ mode `standard` của DSH, và hai pin đang khai (`0.2.2-rc.2`, `0.2.2-rc.5`) có cây preset trùng byte. Sau khi nâng cấp DSH, chạy `node scripts/check-drift.mjs`; một row trỏ module không còn tồn tại làm hỏng cả preset.
 - **Hợp đồng tiếng Việt chiếm ~1,7 KB mỗi request.** Nếu bạn đã tự thêm khối TVKT vào `~/.dsh/AGENTS.md`, bỏ một trong hai để không trả tiền hai lần.
 - **Mỗi loại thay đổi có độ trễ khác nhau.** Xem bảng dưới; đừng giả định mọi thứ đều nóng.
 - **Skill trùng tên.** Provider của plugin ở hạng 300, nên thắng bản trong `~/.dsh/skills` (hạng 400) và thua bản trong `.dsh/skills` của project (hạng 100/200). Chỉ nên có một bản.
@@ -154,7 +154,7 @@ Bản `dsh-tvkt-vi` được đối chiếu với `@deepseek-ai/dsh-skill-office
 | Yêu cầu | Cách khai | Ghi chú |
 |---|---|---|
 | Manifest bundle | `dsh.bundle.patch` → `./cordis.patch.yml` | thiếu nó, `dsh plugin` chỉ cài như dependency thường và cảnh báo |
-| Dải DSH hỗ trợ | `engines.dsh: "0.2.2-rc.2"` | DSH từ chối cài nếu không khớp, thay vì lỗi lúc mount |
+| Dải DSH hỗ trợ | `engines.dsh: "0.2.2-rc.2 || 0.2.2-rc.5"` | Tập pin chính xác nối bằng `||`: chỉ hai version đã chạy smoke mới qua cổng, `rc.3`/`rc.4` thì không |
 | Peer được host chia sẻ | `@deepseek-ai/cordis` trong `peerDependencies`, có `-0` | thiếu nhánh prerelease thì mọi bản pre-release bị loại im lặng |
 | Tiêu đề, mô tả, tài liệu chi tiết | `locale/en.json`, `locale/zh.json`, `docs/DETAIL*.md` | `meta.detail` phải nằm trong thư mục con, không ở gốc gói |
 | Icon | `icon.svg` + trường `icon` trong manifest | SVG tự chứa, dưới 256 KiB |
@@ -179,7 +179,7 @@ Bốn mục đầu và ba mục cuối đều có test chặn hồi quy trong `t
 dsh plugin --profile web add dsh-tvkt-vi
 ```
 
-Bản trên registry: `0.5.1`. Trạng thái publish: **CHỜ DUYỆT 2FA** — registry đã nhận bản stage nhưng `latest` vẫn trỏ `0.5.0` cho tới khi chủ tài khoản duyệt. Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
+Version trong gói: `0.5.2`. Trạng thái publish: bản `0.5.2` **chưa publish**; `latest` trên npm đang là `0.5.1`. Muốn dùng bản trong repo thì cài từ tarball cục bộ, xem mục *Cài không cần npm registry*. Bản ghi `0.0.0-stage` còn nằm trong danh sách version do lần publish đầu bị cắt giữa đường; nó **không** phải bản cài được và đã bị `npm deprecate`.
 
 Danh mục `awesome-dsh-plugin` tự ánh xạ repo sang gói npm: nó đọc `name` trong `package.json` của repo và kiểm `repository.url` của bản `latest` có chứa `Hieupt1904/dsh-tvkt-vi`. Entry **không** khai trường `npm` — bộ kiểm tra từ chối mọi trường ngoài `url`, `name`, `category`, `description`, `icon`, `tarball`.
 
@@ -206,7 +206,7 @@ Trạng thái dưới đây kiểm trực tiếp, không suy từ commit. Mốc 
 | Hạng mục | Trạng thái | Bằng chứng |
 |---|---|---|
 | Repo GitHub | **public** | `gh repo view --json visibility` → `"visibility":"PUBLIC"`; `git ls-remote` ẩn danh trả đúng HEAD |
-| npm | `0.5.1` đã stage, **chờ duyệt 2FA**; `latest` đang là `0.5.0` | `npm view dsh-tvkt-vi version dist-tags`; đăng nhập npm duyệt bản stage để hoàn tất |
+| npm | `latest` là `0.5.1`; bản `0.5.2` của repo chưa publish | `npm view dsh-tvkt-vi version dist-tags` |
 | Entry danh mục | đã merge | `gh pr view 15602 --repo awesome-dsh-plugin/awesome-dsh-plugin` → `MERGED` lúc 2026-11-15T17:30:30Z |
 | Release tarball | `v0.4.0`, asset `dsh-tvkt-vi.tgz` | `gh release view --json tagName,assets` |
 | Index format 1 (Discover) | **CHƯA XÁC NHẬN** | tải `index.json` (5.643 entry), tìm `dsh-tvkt-vi` được 0 lần khớp |
@@ -223,7 +223,7 @@ Máy đích cần: `dsh` đã cài, Node ≥ 24.9.0, `python3` cho linter. Đăn
 dsh plugin --profile web add dsh-tvkt-vi
 ```
 
-Profile ghi `^0.5.1` và mount bundle ngay. Nếu máy đích không bật `patchReload: live`, khởi động lại `dsh web` để agent nhận section prompt và provider skill.
+Profile ghi `^0.5.2` và mount bundle ngay. Nếu máy đích không bật `patchReload: live`, khởi động lại `dsh web` để agent nhận section prompt và provider skill.
 
 ### Bốn bước kiểm sau khi cài
 
@@ -249,7 +249,7 @@ Bước 4 là bằng chứng quyết định. Nếu đường dẫn trỏ `~/.ds
 dsh plugin --profile web update dsh-tvkt-vi --latest
 ```
 
-Chỉ định phiên bản: `dsh plugin --profile web add dsh-tvkt-vi@0.5.1`. Bản `0.0.0-stage` bị deprecate, đừng ghim vào nó.
+Chỉ định phiên bản: `dsh plugin --profile web add dsh-tvkt-vi@"$VERSION"`, thay `$VERSION` bằng bản muốn ghim (bản đang có trên registry: `0.5.1`). Bản `0.0.0-stage` bị deprecate, đừng ghim vào nó.
 
 Hoặc để chợ báo: **Settings → Plugins → Plugin configuration** liệt kê plugin có bản mới và cập nhật bằng một nút. Cơ chế đọc `raw.githubusercontent.com/Hieupt1904/dsh-tvkt-vi/HEAD/package.json`, nên repo phải giữ public.
 

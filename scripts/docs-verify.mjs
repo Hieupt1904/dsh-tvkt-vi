@@ -26,6 +26,8 @@ import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { validateDshPins } from './dsh-pins.mjs'
+
 const PKG_ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, '')
 const CONFIG_FILE = path.join(PKG_ROOT, '.tvkt', 'config.json')
 const LINTER = path.join(PKG_ROOT, 'vendor', 'tvkt', 'tools', 'tvkt_lint.py')
@@ -257,9 +259,13 @@ export function tupleAtLeast(left, right) {
  */
 export const CANONICAL_README_FACTS = [
   {
-    id: 'registry-version',
-    label: 'version trên registry npm',
-    pattern: /Bản trên registry:\s*`([^`]+)`/g,
+    // Neo vào version của chính gói trong repo, không neo vào `latest` của npm:
+    // hai giá trị đó khác nhau trong khoảng thời gian giữa bump và publish, và
+    // buộc tài liệu nói sai một trong hai. Trạng thái registry ghi riêng ở bảng
+    // "Trạng thái trên chợ plugin".
+    id: 'package-version',
+    label: 'version của gói trong repo',
+    pattern: /Version trong gói:\s*`([^`]+)`/g,
     expected: pkg => pkg.version,
     evidence: 'package.json.version',
     required: true,
@@ -304,11 +310,11 @@ export function checkCanonicalFacts({ pkg, readme, compat }) {
     findings.push({ kind: 'DOC_DRIFT', file, detail, evidence })
   }
 
-  // Chính sách hiện tại là exact pin: hai trường phải bằng nhau.
-  if (pkg.engines?.dsh !== pkg.dshTarget) {
-    drift('package.json',
-      `engines.dsh=${pkg.engines?.dsh} khác dshTarget=${pkg.dshTarget}; chính sách hiện tại là exact pin`,
-      'package.json.dshTarget')
+  // Chính sách hiện tại là tập pin chính xác: mọi phần tử phải là version cụ
+  // thể, danh sách xếp tăng dần, và `dshTarget` là phần tử cuối.
+  const pins = validateDshPins(pkg.engines?.dsh, pkg.dshTarget)
+  for (const problem of pins.problems) {
+    drift('package.json', problem, 'package.json.engines.dsh')
   }
 
   if (readme === undefined) {
