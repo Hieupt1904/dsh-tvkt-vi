@@ -176,9 +176,8 @@ cuối qua `dsh web`.
    không chứng minh model tự chọn nó.
 5. **Node floor lấy từ host.** `lib/*.js` chạy được trên Node cũ hơn, nhưng
    plugin chỉ có nghĩa khi host DSH chạy được, và host khai `>=24.9.0`.
-6. **npm mới có 0.5.1.** Kiểm ngày 2026-11-19: `latest` trỏ `0.5.1`. Bản
-   `0.5.2` trong repo chưa publish, nên muốn dùng phải cài từ tarball cục bộ
-   hoặc chờ publish xong rồi cài bằng tên gói.
+6. **npm có 0.5.2.** Kiểm ngày 2026-11-19: `latest` trỏ `0.5.2`, publish lúc
+   `2026-11-19T07:21:52Z`. Cài bằng tên gói được, không cần tarball cục bộ.
 7. **Index Discover chưa có entry này.** Kiểm ngày 2026-11-16: tải `index.json`
    (5.643 entry) và tìm `dsh-tvkt-vi` được 0 lần khớp, dù PR danh mục đã merge.
 
@@ -186,12 +185,13 @@ cuối qua `dsh web`.
 
 | Hạng mục | Giá trị |
 |---|---|
-| npm | `latest` trỏ `0.5.1`; bản `0.5.2` của repo chưa publish |
-| Chặn publish | registry trả `409 Cannot publish over previously staged version "0.5.1"` khi publish lại; `npm stage list` không thấy entry nào với token hiện tại, nên bước duyệt phải làm trên npmjs.com |
+| npm | `latest` trỏ `0.5.2`, publish lúc 2026-11-19T07:21:52Z |
+| Chặn publish | publish lần hai cùng version trả `409 Cannot publish over previously staged version`; registry giữ bản ghi stage mà `npm stage list` không thấy, nên đừng publish lại cùng số version — hãy tăng version |
 | Repo GitHub | public |
 | Entry danh mục | PR #15602 `MERGED` lúc 2026-11-15T17:30:30Z |
+| Release | `v0.5.2`, asset cố định `dsh-tvkt-vi.tgz`; `releases/latest/download/dsh-tvkt-vi.tgz` trả 200 và manifest trong đó là 0.5.2 |
 | CI run | `ci` #43788353640, commit `6bdcb6c`, kết luận `success` (trước thay đổi của 0.5.0 hậu kiểm này) |
-| Cài lại từ registry | `npm install dsh-tvkt-vi@0.5.0` trong thư mục sạch, `import()` chạy được, `readSkillBody()` trả 5911 ký tự |
+| Cài lại từ registry | `npm install dsh-tvkt-vi@0.5.2` trong thư mục sạch, `import()` chạy được, `inject` trả `systemPrompt` + `skills`, `readSkillBody()` trả 5917 ký tự |
 
 ## Cách kiểm chứng lại
 
